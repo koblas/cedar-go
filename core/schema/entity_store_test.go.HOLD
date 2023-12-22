@@ -1,0 +1,59 @@
+package ast_test
+
+import (
+	"encoding/json"
+	"fmt"
+	"testing"
+
+	"github.com/koblas/cedar-go/core/ast"
+	"github.com/stretchr/testify/assert"
+)
+
+type MA map[string]any
+
+func TestEntityStoreBasic(t *testing.T) {
+	data := MA{
+		"principal": MA{
+			"type": "Qxxxxxxxxxx::a",
+			"id":   "abc",
+		},
+		"context": MA{
+			"v": MA{
+				"__entity": MA{
+					"type": "Qxxxxxxxxxx::a",
+					"id":   "123",
+				},
+			},
+			"something": []any{"a", 1, "b"},
+			"timestamp": 123123123,
+		},
+	}
+
+	input, err := json.Marshal(data)
+	assert.NoError(t, err)
+
+	store := ast.VarValue{}
+
+	err = json.Unmarshal(input, &store)
+	assert.NoError(t, err)
+
+	r, err := json.MarshalIndent(store.AsJson(), "", " ")
+	assert.NoError(t, err)
+	fmt.Println(string(r))
+}
+
+func TestEntityJsonNull(t *testing.T) {
+	type Record struct {
+		Principal ast.EntityValue `json:"principal,omitempty"`
+	}
+
+	record := Record{}
+	data := []byte(`{ "principal": null }`)
+
+	err := json.Unmarshal(data, &record)
+
+	assert.NoError(t, err)
+
+	assert.Nil(t, record.Principal)
+
+}
