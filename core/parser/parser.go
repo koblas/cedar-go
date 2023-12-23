@@ -536,7 +536,27 @@ func (p *parser) parseAccess() *cst.MemberAccess {
 		defer un(trace(p, "Access"))
 	}
 
-	ident := p.parseIdent()
+	var ident *cst.BasicLit
+	if p.tok == token.LBRACK {
+		lparenPos := p.expect(token.LBRACK)
+		ident = p.parseString()
+		rparenPos := p.expect(token.RBRACK)
+
+		return &cst.MemberAccess{
+			IsFunc:    false,
+			IsRef:     true,
+			Ident:     ident,
+			LparenPos: lparenPos,
+			Args:      nil,
+			Index:     nil,
+			RparenPos: rparenPos,
+		}
+	} else if p.tok == token.PERIOD {
+		p.next()
+		ident = p.parseIdent()
+	} else {
+		return nil
+	}
 	lparenPos := p.pos
 	rparenPos := p.pos
 	var args []cst.Expr
@@ -552,8 +572,7 @@ func (p *parser) parseAccess() *cst.MemberAccess {
 		isRef = true
 		lparenPos = p.expect(token.LBRACK)
 		if p.tok == token.STRINGLIT {
-			value := p.parseString()
-			index = &value
+			index = p.parseString()
 		}
 		rparenPos = p.expect(token.RBRACK)
 	}
@@ -579,13 +598,12 @@ func (p *parser) parseMember() cst.Expr {
 	// 	return p.parsePrimary()
 	// }
 	primary := p.parsePrimary()
-	if p.tok != token.PERIOD {
+	if p.tok != token.PERIOD && p.tok != token.LBRACK {
 		return primary
 	}
 
 	var access []*cst.MemberAccess
-	for p.tok == token.PERIOD {
-		p.next()
+	for p.tok == token.PERIOD || p.tok == token.LBRACK {
 		item := p.parseAccess()
 
 		if item != nil {
@@ -979,7 +997,7 @@ func (p *parser) parseIdent() *cst.BasicLit {
 }
 
 // Consume a string
-func (p *parser) parseString() cst.BasicLit {
+func (p *parser) parseString() *cst.BasicLit {
 	if p.trace {
 		defer un(trace(p, "Ident"))
 	}
@@ -992,7 +1010,7 @@ func (p *parser) parseString() cst.BasicLit {
 	} else {
 		p.expect(token.STRINGLIT) // use expect() error handling
 	}
-	return cst.BasicLit{ValuePos: pos, Kind: token.STRINGLIT, Value: name}
+	return &cst.BasicLit{ValuePos: pos, Kind: token.STRINGLIT, Value: name}
 }
 
 // ----------------------------------------------------------------------------
@@ -1013,7 +1031,7 @@ func (p *parser) parseAnnotation() []*cst.AnnotationSpec {
 		node.Lparen = p.expect(token.LPAREN)
 
 		if p.tok == token.STRINGLIT {
-			node.Value = p.parseString()
+			node.Value = *p.parseString()
 		} else {
 			p.expect(token.STRINGLIT) // use expect() error handling
 		}

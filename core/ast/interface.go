@@ -38,8 +38,9 @@ func (d Decision) String() string {
 }
 
 type Result struct {
-	Decision Decision
-	Reasons  []string
+	Decision     Decision
+	RulesMatched bool
+	Reasons      []string
 }
 
 func (e EntityRef) ToValue() EntityValue {
@@ -72,7 +73,8 @@ func Eval(ctx context.Context, p PolicyList, request *Request) (*Result, error) 
 	}
 
 	return &Result{
-		Decision: decision,
-		Reasons:  []string{},
+		Decision:     decision,
+		RulesMatched: result.Evaluated,
+		Reasons:      result.RulesMatched,
 	}, nil
 }

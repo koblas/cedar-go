@@ -14,7 +14,6 @@ import (
 	"github.com/koblas/cedar-go/core/ast"
 	"github.com/koblas/cedar-go/core/parser"
 	"github.com/koblas/cedar-go/core/schema"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -50,6 +49,7 @@ type SpecQuery struct {
 	// TODO context
 	Decision string   `json:"decision"`
 	Errors   []string `json:"errors"`
+	Reasons  []string `json:"reasons"`
 
 	Principal ast.EntityValue `json:"principal"`
 	Resource  ast.EntityValue `json:"resource"`
@@ -111,41 +111,31 @@ func runTests(t *testing.T, dir string) {
 			schemaData, err := readFile(spec.Schema)
 			require.NoError(t, err, "failed to read schema")
 
-			debugDump := func(desc string) {
-				fmt.Println("=============================")
-				fmt.Println("Spec: ", path)
-				fmt.Println("Policy: ", spec.Policies)
-				fmt.Println("Schema: ", spec.Schema)
-				fmt.Println("Entities: ", spec.Entities)
-				fmt.Println("TestCase: ", desc)
-				fmt.Println("POLICY", string(policyData))
-				fmt.Println("")
-			}
+			// debugDump := func(desc string) {
+			// 	fmt.Println("=============================")
+			// 	fmt.Println("Spec: ", path)
+			// 	fmt.Println("Policy: ", spec.Policies)
+			// 	fmt.Println("Schema: ", spec.Schema)
+			// 	fmt.Println("Entities: ", spec.Entities)
+			// 	fmt.Println("TestCase: ", desc)
+			// 	fmt.Println("POLICY", string(policyData))
+			// 	fmt.Println("")
+			// }
 
 			entities := schema.JsonEntities{}
 			err = json.Unmarshal(entityData, &entities)
 			require.NoError(t, err, "failed to parse entities")
 
-			policy, policyErr := parser.ParseRules(string(policyData))
+			policy, err := parser.ParseRules(string(policyData))
+			require.NoError(t, err, "failed to parse policies")
 
-			schema, schemaErr := schema.LoadSchema(bytes.NewReader(schemaData))
-
-			if !spec.ShouldValidate {
-				// skipping
-				return
-			}
-
-			require.NoError(t, policyErr, "failed to parse policies")
-			require.NoError(t, schemaErr, "failed to parse schema")
+			schema, err := schema.LoadSchema(bytes.NewReader(schemaData))
+			require.NoError(t, err, "failed to parse schema")
 
 			store, err := schema.NormalizeEntites(entities)
-			require.NoError(t, err, "failed to load store")
+			require.NoError(t, err, "failed to load store - parse entities")
 
 			auth := core.NewAuthorizer(policy, core.WithSchema(schema), core.WithStore(store))
-			// if !assert.NoError(t, err, "failed to parse rules") {
-			// 	debugDump()
-			// 	return
-			// }
 
 			for _, query := range spec.Queries {
 				t.Run(query.Description, func(t *testing.T) {
@@ -164,39 +154,37 @@ func runTests(t *testing.T, dir string) {
 						Context:   qcontext,
 					}
 
-					result, err := auth.IsAuthorized(context.TODO(), &request)
+					result, err := auth.IsAuthorizedDetail(context.TODO(), &request)
 
-					if policyErr != nil {
-						err = policyErr
-					}
 					// if err == nil && !spec.ShouldValidate {
 					// 	debugDump()
 					// 	fmt.Println("POLICY: SHOULD HAVE NOT VALIDATED", spec.Queries[0].Errors)
 					// 	assert.Error(t, policyErr, "policy should not have validated")
 					// }
 
-					expectErr := len(query.Errors) != 0
-					hasErr := err != nil
+					// if hasErr != expectErr {
+					// 	debugDump(query.Description)
+					// 	if expectErr {
+					// 		fmt.Println("EXPECTED ERRORS: ", query.Errors)
+					// 	} else {
+					// 		fmt.Println("GOT ERROR", err)
+					// 	}
+					// }
 
-					if hasErr != expectErr {
-						debugDump(query.Description)
-						if expectErr {
-							fmt.Println("EXPECTED ERRORS: ", query.Errors)
-						} else {
-							fmt.Println("GOT ERROR", err)
-						}
-					}
-
-					if expectErr {
-						assert.Error(t, err)
-					} else {
-						assert.NoError(t, err)
-					}
 					resultStr := "Allow"
-					if !result {
+					if result == nil || !result.IsAllowed {
 						resultStr = "Deny"
 					}
-					assert.Equal(t, query.Decision, resultStr)
+					require.Equal(t, query.Decision, resultStr)
+					if resultStr == "Allow" {
+						require.NoError(t, err)
+						require.NotNil(t, result, "Result is nil")
+
+						require.EqualValues(t, len(query.Reasons), len(result.Matches), "policy matches")
+					}
+
+					// Whether the given policies are expected to pass the validator with this schema, or not
+					// if spec.ShouldValidate {
 				})
 
 			}
@@ -232,8 +220,8 @@ func TestMulti(t *testing.T) {
 
 // ------ pull outs for debugging
 
-func TestExampe4f(t *testing.T) {
-	runTests(t, "tests/example_use_cases_doc/4f.json")
+func TestExampe4c(t *testing.T) {
+	runTests(t, "tests/example_use_cases_doc/4c.json")
 }
 
 func TestExampe3(t *testing.T) {

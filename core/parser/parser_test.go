@@ -43,6 +43,13 @@ func TestFunc(t *testing.T) {
 	testRunner(t, `permit(principal, action, resource) when { time("now") };`)
 }
 
+func TestEntityRef(t *testing.T) {
+	testRunner(t, `
+	permit(principal, action, resource) 
+	when { User::"alice"["job"] };
+	`)
+}
+
 func TestSimpleFail(t *testing.T) {
 	rule := `
 	permit(

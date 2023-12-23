@@ -488,7 +488,7 @@ func (s *Scanner) scanEscape(quote rune) bool {
 
 	var base, max uint32
 	switch s.ch {
-	case 'n', 'r', 't', '\\', '\'', '0', quote:
+	case 'n', 'r', 't', '\\', '\'', '*', '0', quote:
 		s.next()
 		return true
 	// case 'x':
@@ -502,7 +502,7 @@ func (s *Scanner) scanEscape(quote rune) bool {
 		}
 		s.next()
 	default:
-		msg := "unknown escape sequence"
+		msg := "unknown escape sequence '\\" + string(s.ch) + "' in string"
 		if s.ch < 0 {
 			msg = "escape sequence not terminated"
 		}

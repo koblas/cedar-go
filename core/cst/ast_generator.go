@@ -314,6 +314,34 @@ func (n *IfExpr) ToAst(file *token.File) (ast.EvalNode, error) {
 	}, nil
 }
 
+func (n *ReceiverInits) ToAst(file *token.File) (ast.EvalNode, error) {
+	var variables []ast.VariablePair
+
+	for _, item := range n.Exprs {
+		var key string
+		if item.Literal.Kind == token.STRINGLIT {
+			key = unquote(item.Literal.Value)
+		} else if item.Literal.Kind == token.IDENTIFER {
+			key = item.Literal.Value
+		}
+
+		value, err := toEvalNode(file, item.Expr, "value")
+		if err != nil {
+			return nil, err
+		}
+		pair := ast.VariablePair{
+			Key:   key,
+			Value: value,
+		}
+		variables = append(variables, pair)
+	}
+
+	return &ast.VariableDef{
+		StartPos: file.Position(n.Pos()),
+		Pairs:    variables,
+	}, nil
+}
+
 func (n *SetExpr) ToAst(file *token.File) (ast.EvalNode, error) {
 	exprs := []ast.EvalNode{}
 	for _, item := range n.Exprs {

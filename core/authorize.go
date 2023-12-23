@@ -14,6 +14,11 @@ type Request struct {
 	Context   *ast.VarValue
 }
 
+type Detail struct {
+	IsAllowed bool
+	Matches   []string
+}
+
 type Authorizer interface {
 	IsAuthorized(ctx context.Context, request *Request) (bool, error)
 }
@@ -59,12 +64,7 @@ func NewAuthorizer(p ast.PolicyList, options ...Option) *SchemaAuthorizer {
 	return &conf
 }
 
-func (auth *SchemaAuthorizer) IsAuthorized(ctx context.Context, request *Request) (bool, error) {
-	// TODO
-	// if Schema is not null
-	// - lookup action
-	// - validate context against action info
-
+func (auth *SchemaAuthorizer) IsAuthorizedDetail(ctx context.Context, request *Request) (*Detail, error) {
 	req := ast.Request{
 		Principal: request.Principal,
 		Action:    request.Action,
@@ -75,8 +75,21 @@ func (auth *SchemaAuthorizer) IsAuthorized(ctx context.Context, request *Request
 	}
 
 	result, err := ast.Eval(ctx, auth.Policies, &req)
+
+	if err != nil {
+		return nil, err
+	}
+	return &Detail{
+		IsAllowed: result.Decision == ast.Allow,
+		Matches:   result.Reasons,
+	}, nil
+}
+
+func (auth *SchemaAuthorizer) IsAuthorized(ctx context.Context, request *Request) (bool, error) {
+	detail, err := auth.IsAuthorizedDetail(ctx, request)
 	if err != nil {
 		return false, err
 	}
-	return result.Decision == ast.Allow, nil
+
+	return detail.IsAllowed, nil
 }

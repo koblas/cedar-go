@@ -11,10 +11,11 @@ type EvalValue interface {
 }
 
 type policyResult struct {
-	Decision  Decision
-	Evaluated bool
-	Permit    bool
-	Forbid    bool
+	Decision     Decision
+	Evaluated    bool
+	Permit       bool
+	Forbid       bool
+	RulesMatched []string
 }
 
 type RuntimeRequest struct {
@@ -117,9 +118,14 @@ func (n *BinaryExpr) evalNode(request *RuntimeRequest) (EvalValue, error) {
 	if err != nil {
 		return nil, err
 	}
-	right, err := n.Right.evalNode(request)
-	if err != nil {
-		return nil, err
+	var right EvalValue
+	if n.Op != OpLand && n.Op != OpLor {
+		// Delay evaluation for logical operations
+		r, err := n.Right.evalNode(request)
+		if err != nil {
+			return nil, err
+		}
+		right = r
 	}
 
 	switch n.Op {
@@ -190,9 +196,26 @@ func (n *BinaryExpr) evalNode(request *RuntimeRequest) (EvalValue, error) {
 	case OpLand, OpLor:
 		ltype, ok := left.(LogicType)
 		if !ok {
-			msg := fmt.Sprintf("type error: not supported %s %s %s",
-				left.TypeName(), n.Op.String(), right.TypeName())
+			msg := fmt.Sprintf("type error: not supported %s %s",
+				left.TypeName(), n.Op.String())
 			return nil, evalError(n, msg)
+		}
+
+		// Short circut these
+		lval, err := asBool(n, left)
+		if err != nil {
+			return nil, err
+		}
+		if n.Op == OpLor && lval {
+			return left, nil
+		}
+		if n.Op == OpAdd && !lval {
+			return left, nil
+		}
+		// Now process the right hand side
+		right, err := n.Right.evalNode(request)
+		if err != nil {
+			return nil, err
 		}
 
 		if n.Op == OpLand {
@@ -358,6 +381,21 @@ func (n *Reference) evalNode(request *RuntimeRequest) (EvalValue, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
+func (n *VariableDef) evalNode(request *RuntimeRequest) (EvalValue, error) {
+	data := map[string]NamedType{}
+
+	for _, item := range n.Pairs {
+		value, err := item.Value.evalNode(request)
+		if err != nil {
+			return nil, err
+		}
+
+		data[item.Key] = value
+	}
+
+	return NewVarValue(data), nil
+}
+
 func (n *Identifier) evalNode(request *RuntimeRequest) (EvalValue, error) {
 	if request.Trace {
 		fmt.Printf("Identifier(%s)\n", n.Value)
@@ -444,10 +482,6 @@ func (n *Policy) evalNode(request *RuntimeRequest) (*policyResult, error) {
 		if request.Trace {
 			fmt.Printf("  PolicyCondition(%s) = %v\n", item.Condition.String(), boolValue)
 		}
-		// Early exit
-		if !evalResult {
-			break
-		}
 	}
 
 	forbid := false
@@ -474,6 +508,7 @@ func (p PolicyList) evalNode(request *RuntimeRequest) (*policyResult, error) {
 	allowed := false
 	forbid := false
 
+	var matches []string
 	var elist []error
 	for _, item := range p {
 		res, err := item.evalNode(request)
@@ -488,6 +523,10 @@ func (p PolicyList) evalNode(request *RuntimeRequest) (*policyResult, error) {
 
 		forbid = forbid || res.Forbid
 		allowed = allowed || res.Permit
+
+		if res.Forbid || res.Permit {
+			matches = append(matches, item.Id)
+		}
 	}
 
 	var err error
@@ -498,13 +537,15 @@ func (p PolicyList) evalNode(request *RuntimeRequest) (*policyResult, error) {
 	// Must be explcitly allowed
 	if allowed && !forbid {
 		return &policyResult{
-			Decision: Allow,
-			Permit:   true,
+			Decision:     Allow,
+			Permit:       true,
+			RulesMatched: matches,
 		}, err
 	}
 
 	return &policyResult{
-		Decision: Deny,
-		Forbid:   true,
+		Decision:     Deny,
+		Forbid:       true,
+		RulesMatched: matches,
 	}, err
 }

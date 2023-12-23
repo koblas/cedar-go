@@ -61,6 +61,9 @@ func (v1 *IpValue) AsJson() any {
 
 // Internal helper for function to get the type back
 func asNetIp(input NamedType) (*IpValue, error) {
+	if input == nil {
+		return nil, fmt.Errorf("expected ip got nil: %w", ErrTypeMismatch)
+	}
 	val, ok := input.(*IpValue)
 	if !ok {
 		return nil, fmt.Errorf("expected ip got %s: %w", input.TypeName(), ErrTypeMismatch)
@@ -111,6 +114,9 @@ func (v1 DecimalValue) AsJson() any {
 
 // Internal helper for function to get the type back
 func asFloat(input NamedType) (float64, error) {
+	if input == nil {
+		return 0, fmt.Errorf("expected ip got nil: %w", ErrTypeMismatch)
+	}
 	val, ok := input.(DecimalValue)
 	if !ok {
 		return 0, fmt.Errorf("expected decimal got %s: %w", input.TypeName(), ErrTypeMismatch)

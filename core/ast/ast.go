@@ -178,6 +178,16 @@ type (
 		Else     EvalNode
 	}
 
+	// not an expr
+	VariablePair struct {
+		Key   string
+		Value EvalNode
+	}
+	VariableDef struct {
+		StartPos token.Position
+		Pairs    []VariablePair
+	}
+
 	PolicyCondition struct {
 		StartPos  token.Position
 		Condition Condition
@@ -206,22 +216,24 @@ type (
 )
 
 // Things that can be evaluated
-func (*UnaryExpr) exprNode()       {}
 func (*BinaryExpr) exprNode()      {}
 func (*FunctionCall) exprNode()    {}
-func (*Reference) exprNode()       {}
 func (*Identifier) exprNode()      {}
-func (*PolicyCondition) exprNode() {}
-func (*Policy) exprNode()          {}
 func (*IfExpr) exprNode()          {}
 func (*ListExpr) exprNode()        {}
+func (*Policy) exprNode()          {}
+func (*PolicyCondition) exprNode() {}
+func (*Reference) exprNode()       {}
+func (*UnaryExpr) exprNode()       {}
+func (*VariableDef) exprNode()     {}
 
-func (n *UnaryExpr) Pos() token.Position       { return n.StartPos }
 func (n *BinaryExpr) Pos() token.Position      { return n.StartPos }
 func (n *FunctionCall) Pos() token.Position    { return n.StartPos }
-func (n *Reference) Pos() token.Position       { return n.StartPos }
 func (n *Identifier) Pos() token.Position      { return n.StartPos }
-func (n *PolicyCondition) Pos() token.Position { return n.StartPos }
-func (n *Policy) Pos() token.Position          { return n.StartPos }
 func (n *IfExpr) Pos() token.Position          { return n.StartPos }
 func (n *ListExpr) Pos() token.Position        { return n.StartPos }
+func (n *Policy) Pos() token.Position          { return n.StartPos }
+func (n *PolicyCondition) Pos() token.Position { return n.StartPos }
+func (n *Reference) Pos() token.Position       { return n.StartPos }
+func (n *UnaryExpr) Pos() token.Position       { return n.StartPos }
+func (n *VariableDef) Pos() token.Position     { return n.StartPos }
