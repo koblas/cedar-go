@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -38,7 +37,7 @@ func main() {
 	}
 
 	var opts []cedar.Option
-	sdef := schema.NewEmptySchema()
+	var sdef *schema.Schema
 	if *schemaFile != "" {
 		fd, err := os.Open(*schemaFile)
 		if err != nil {
@@ -60,13 +59,7 @@ func main() {
 		}
 		defer fd.Close()
 
-		entities := schema.JsonEntities{}
-		err = json.NewDecoder(fd).Decode(&entities)
-		if err != nil {
-			panic(fmt.Errorf("unable to decode entities: %w", err))
-		}
-
-		store, err := sdef.NormalizeEntites(entities)
+		store, err := cedar.StoreFromJson(fd, sdef)
 		if err != nil {
 			panic(fmt.Errorf("unable load entities: %w", err))
 		}

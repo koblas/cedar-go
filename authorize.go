@@ -2,6 +2,9 @@ package cedar
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"io"
 
 	"github.com/koblas/cedar-go/engine"
 	"github.com/koblas/cedar-go/schema"
@@ -34,23 +37,45 @@ type SchemaAuthorizer struct {
 
 type EmptyStore struct{}
 
+// StoreFromJson create a store object based on the "standard" entity store
+// as defined in the Cedar specification
+func StoreFromJson(reader io.Reader, sdef *schema.Schema) (engine.Store, error) {
+	if sdef == nil {
+		sdef = schema.NewEmptySchema()
+	}
+
+	entities := schema.JsonEntities{}
+	err := json.NewDecoder(reader).Decode(&entities)
+	if err != nil {
+		panic(fmt.Errorf("unable to decode entities: %w", err))
+	}
+
+	return sdef.NormalizeEntites(entities)
+}
+
 //
 //
 
 type Option func(*SchemaAuthorizer)
 
+// WithSchema add a schema definition to the engine this
+// is used to parse the input Context information
 func WithSchema(s *schema.Schema) Option {
 	return func(sa *SchemaAuthorizer) {
 		sa.Schema = s
 	}
 }
 
+// WithStore add an interface to external data storage
+// either with JSON entities or a custom storage
 func WithStore(s engine.Store) Option {
 	return func(sa *SchemaAuthorizer) {
 		sa.Store = s
 	}
 }
 
+// NewAuthorizer constructs a authorization engine with pre-parsed
+// rules and options
 func NewAuthorizer(p engine.PolicyList, options ...Option) *SchemaAuthorizer {
 	conf := SchemaAuthorizer{
 		Policies: p,
