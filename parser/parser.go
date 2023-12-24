@@ -28,21 +28,6 @@ type parser struct {
 	pos token.Pos   // token position
 	tok token.Token // one token look-ahead
 	lit string      // token literal
-
-	// Error recovery
-	// (used to limit the number of calls to parser.advance
-	// w/o making scanning progress - avoids potential endless
-	// loops across multiple parser functions during error recovery)
-	syncPos token.Pos // last synchronization position
-	syncCnt int       // number of parser.advance calls without progress
-
-	// Non-syntactic parser control
-	exprLev int  // < 0: in control clause, >= 0: in expression
-	inRhs   bool // if set, the parser is parsing a rhs expression
-
-	// Ordinary identifier scopes
-	pkgScope *cst.Scope // pkgScope.Outer == nil
-	topScope *cst.Scope // top-most scope; may be pkgScope
 }
 
 func (p *parser) init(fset *token.FileSet, filename string, src []byte, mode Mode) {
@@ -249,59 +234,6 @@ func (p *parser) expect(tok token.Token) token.Pos {
 	return pos
 }
 
-func (p *parser) atComma(context string, follow token.Token) bool {
-	if p.tok == token.COMMA {
-		return true
-	}
-	if p.tok != follow {
-		msg := "missing ','"
-		if p.tok == token.SEMICOLON && p.lit == "\n" {
-			msg += " before newline"
-		}
-		p.error(p.pos, msg+" in "+context)
-		return true // "insert" comma and continue
-	}
-	return false
-}
-
-func assert(cond bool, msg string) {
-	if !cond {
-		panic("go/parser internal error: " + msg)
-	}
-}
-
-// advance consumes tokens until the current token p.tok
-// is in the 'to' set, or token.EOF. For error recovery.
-func (p *parser) advance(to map[token.Token]bool) {
-	for ; p.tok != token.EOF; p.next() {
-		if to[p.tok] {
-			// Return only if parser made some progress since last
-			// sync or if it has not reached 10 advance calls without
-			// progress. Otherwise consume at least one token to
-			// avoid an endless parser loop (it is possible that
-			// both parseOperand and parseStmt call advance and
-			// correctly do not advance, thus the need for the
-			// invocation limit p.syncCnt).
-			if p.pos == p.syncPos && p.syncCnt < 10 {
-				p.syncCnt++
-				return
-			}
-			if p.pos > p.syncPos {
-				p.syncPos = p.pos
-				p.syncCnt = 0
-				return
-			}
-			// Reaching here indicates a parser bug, likely an
-			// incorrect token list in this function, but it only
-			// leads to skipping of possibly correct code if a
-			// previous error is present, and thus is preferred
-			// over a non-terminating parse.
-		}
-	}
-}
-
-// var stmtStart = map[tok}
-
 // ----------------------------------------------------------------------------
 // RecInits ::= (IDENT | STR) ':' Expr {',' (IDENT | STR) ':' Expr}
 func (p *parser) parseReceiverInits() []cst.ReceiverInit {
@@ -352,28 +284,6 @@ func (p *parser) parseExprList(endTok token.Token) ([]cst.Expr, token.Pos) {
 	}
 
 	return exprs, p.expect(endTok)
-}
-
-// ----------------------------------------------------------------------------
-// EntList ::= Entity {',' Entity}
-func (p *parser) parseEntList() []*cst.EntityName {
-	var entities []*cst.EntityName
-	entity := p.parseEntity()
-	if entity == nil {
-		return entities
-	}
-	entities = append(entities, entity)
-	for p.tok == token.COMMA {
-		p.next()
-
-		entity := p.parseEntity()
-		if entity != nil {
-			entities = append(entities, entity)
-		}
-	}
-
-	return entities
-
 }
 
 // ----------------------------------------------------------------------------

@@ -37,7 +37,8 @@ func (schema JsonSchema) verifyEntityShape(path Path, value JsonEntityShape, loo
 			return fmt.Errorf("%s: name property required: %w", path.String(), ErrInvalidSchema)
 		}
 		noName = false
-	case "Record":
+	case "Record", "":
+		// empty string "" is a non-set defintion assume Record
 		// Attributes can be empty
 		noAttributes = false
 	default:
@@ -110,19 +111,28 @@ func (schema JsonSchema) verifyNamespace(path Path, value JsonSchemaEntry) error
 		if hasWhiteSpace(name) {
 			return fmt.Errorf("%s: whitespace in commonTypes name: %w", path.String(), ErrInvalidSchema)
 		}
-		schema.verifyEntityShape(path, entity, nil)
+		err := schema.verifyEntityShape(path, entity, nil)
+		if err != nil {
+			return err
+		}
 	}
 	for name, entity := range value.EntityTypes {
 		path := append(path, "entityTypes", name)
 		if hasWhiteSpace(name) {
 			return fmt.Errorf("%s: whitespace in entityTypes name: %w", path.String(), ErrInvalidSchema)
 		}
-		schema.verifyEntityType(append(path, "entityTypes", name), entity, value.CommonTypes, value.EntityTypes)
+		err := schema.verifyEntityType(path, entity, value.CommonTypes, value.EntityTypes)
+		if err != nil {
+			return err
+		}
 	}
 	for name, action := range value.Actions {
 		path := append(path, "actions", name)
 		//  action names can have whitespace
-		schema.verifyAction(append(path, "actions", name), action, value.CommonTypes)
+		err := schema.verifyAction(append(path, "actions", name), action, value.CommonTypes)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

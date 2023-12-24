@@ -194,15 +194,6 @@ type (
 		Expr      EvalNode
 	}
 
-	PolicyVariable struct {
-		StartPos token.Position
-		Op       Operand   // ==, in or invalid
-		Var      Principal // one of principal, resource, action, context
-		Entity   EntityValue
-		Entities SetValue
-		IsSlot   bool
-	}
-
 	Policy struct {
 		StartPos    token.Position
 		Id          string // Unique identifier

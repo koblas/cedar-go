@@ -102,8 +102,6 @@ func TestNormalizerBase(t *testing.T) {
 		  }
 		},
 		"memberOfTypes": [
-		  "Account",
-		  "Album"
 		]
 	      }
 		}

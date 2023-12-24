@@ -424,37 +424,6 @@ func (n *PolicyCondition) evalNode(request *RuntimeRequest) (EvalValue, error) {
 	return BoolValue(!boolValue), nil
 }
 
-/*
-func (n *PolicyVariable) evalNode(request *RuntimeRequest) (BoolValue, error) {
-	if request.Trace {
-		fmt.Printf("PolicyVariable(%s)\n", n.Var.String())
-	}
-	// Invalid == "All"
-	if n.Op == OpInvalid {
-		return BoolValue(true), nil
-	}
-
-	var lhs EntityValue
-	switch n.Var {
-	case PrincipalPrincipal:
-		lhs = request.principalValue
-	case PrincipalResource:
-		lhs = request.resourceValue
-	case PrincipalAction:
-		lhs = request.actionValue
-	}
-
-	if n.Op == OpEql {
-		return lhs.OpEqual(n.Entity)
-	}
-
-	if n.Entities != nil {
-		return lhs.OpIn(n.Entities)
-	}
-	return lhs.OpIn(n.Entity)
-}
-*/
-
 func (n *Policy) evalNode(request *RuntimeRequest) (*policyResult, error) {
 	if request.Trace {
 		fmt.Printf("Policy(id=%s, type=%s)\n", n.Id, n.Effect.String())

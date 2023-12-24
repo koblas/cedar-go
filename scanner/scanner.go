@@ -88,15 +88,6 @@ func (s *Scanner) next() {
 	}
 }
 
-// peek returns the byte following the most recently read character without
-// advancing the scanner. If the scanner is at EOF, peek returns 0.
-func (s *Scanner) peek() byte {
-	if s.rdOffset < len(s.src) {
-		return s.src[s.rdOffset]
-	}
-	return 0
-}
-
 // A mode value is a set of flags (or 0).
 // They control scanner behavior.
 type Mode uint
@@ -399,7 +390,7 @@ func (s *Scanner) digits(base int, invalid *int) int {
 
 func (s *Scanner) scanNumber() (token.Token, string) {
 	offs := s.offset
-	tok := token.ILLEGAL
+	tok := token.INT
 
 	base := 10        // number base
 	prefix := rune(0) // one of 0 (decimal), '0' (0-octal), 'x', 'o', or 'b'
@@ -407,7 +398,6 @@ func (s *Scanner) scanNumber() (token.Token, string) {
 	invalid := -1     // index of invalid digit in literal, or < 0
 
 	// integer part
-	tok = token.INT
 	digsep |= s.digits(base, &invalid)
 
 	if digsep&1 == 0 {

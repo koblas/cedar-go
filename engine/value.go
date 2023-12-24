@@ -362,29 +362,6 @@ func (v1 *EntityValue) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// TODO -- check tree
-func (v1 EntityValue) checkIn(values SetValue) (BoolValue, error) {
-	// TODO -- need to do deep checks
-
-	for _, item := range values {
-		if val, ok := item.(EntityValue); ok {
-			match, err := v1.OpEqual(val)
-			if err != nil {
-				return false, err
-			}
-			if match {
-				return true, nil
-			}
-		} else if val, ok := item.(SetValue); ok {
-			return v1.checkIn(val)
-		} else {
-			return false, fmt.Errorf("expected entity or set got %s: %w", values.TypeName(), ErrTypeMismatch)
-		}
-	}
-
-	return false, nil
-}
-
 func (v1 EntityValue) OpIn(input NamedType, store Store) (BoolValue, error) {
 	parents, err := store.GetParents(v1)
 	if err != nil {
@@ -522,7 +499,7 @@ func (v1 IdentifierValue) OpEqual(input NamedType) (BoolValue, error) {
 // ---------
 
 type VarValue struct {
-	self     NamedType
+	// self     NamedType
 	children map[string]NamedType
 }
 

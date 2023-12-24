@@ -82,32 +82,6 @@ func (n *ValueNode) ToJson() any {
 	panic(fmt.Sprintf("invalid result type %v", n))
 }
 
-func (n *PolicyVariable) ToJson() *JsonVariable {
-	variable := JsonVariable{
-		Op: n.Op.String(),
-	}
-
-	if n.IsSlot {
-		if n.Var == PrincipalPrincipal {
-			variable.Slot = "?principal"
-		} else if n.Var == PrincipalResource {
-			variable.Slot = "?resource"
-		}
-	} else if len(n.Entities) == 0 {
-		variable.Op = "All"
-	} else if len(n.Entities) == 1 {
-		// TODO
-		// variable.Entity = n.Entity.ToJson()
-	} else {
-		// TODO
-		// for _, item := range n.Entities {
-		// 	variable.Entities = append(variable.Entities, *item.ToJson())
-		// }
-	}
-
-	return &variable
-}
-
 func (n *EntityRef) ToJson() *JsonEntityType {
 	return &JsonEntityType{
 		Type: n.Type,
