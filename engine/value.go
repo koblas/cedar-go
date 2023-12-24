@@ -272,6 +272,17 @@ func NewEntityValue(kind string, id string) EntityValue {
 	return append(parts, id)
 }
 
+func NewEntityFromString(value string) EntityValue {
+	parts := strings.Split(value, ENTITY_PATH_SEP)
+
+	id := parts[len(parts)-1]
+	if len(id) > 1 && id[0] == '"' && id[len(id)-1] == '"' {
+		id = id[1 : len(id)-1]
+	}
+
+	return append(parts[0:len(parts)-1], id)
+}
+
 // EntityType returns the namespaced type name for this entity
 func (v1 EntityValue) EntityType() string {
 	if v1 == nil {
