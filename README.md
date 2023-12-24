@@ -1,9 +1,8 @@
 # Cedar Go
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/koblas/cedar-go.svg)](https://pkg.go.dev/github.com/koblas/cedar-go)
 [![Go Report Card](https://goreportcard.com/badge/github.com/koblas/cedar-go)](https://goreportcard.com/report/github.com/koblas/cedar-go)
-[![Build Status](https://github.com/koblas/cedar-go/actions/workflows/ci/badge.svg?branch=main)](https://github.com/koblas/cedar-go/actions)
-[![GoDoc](https://pkg.go.dev/badge/github.com/koblas/cedar-go)](https://pkg.go.dev/github.com/koblas/cedar-go)
+[![Build Status](https://github.com/koblas/cedar-go/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/koblas/cedar-go/actions)
+[![Go Reference](https://pkg.go.dev/badge/github.com/koblas/cedar-go)](https://pkg.go.dev/github.com/koblas/cedar-go)
 
 <!-- [![CII Best Practices](https://bestpractices.coreinfrastructure.org/TODO)](https://bestpractices.coreinfrastructure.org/TODO) -->
 
