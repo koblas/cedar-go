@@ -155,13 +155,16 @@ func walkMap(path string, v reflect.Value, shape map[string]*EntityShape) (engin
 			}
 		}
 		if (sub != nil && sub.Type == SHAPE_ENTITY) || key == "__entity" {
-			val, err := specialEntity(path, iter.Value(), true)
+			val, err := specialEntity(path, iter.Value(), key != "__entity")
 			if err != nil {
 				return nil, err
 			}
 			if sub != nil && val.EntityType() != sub.Name {
 				return nil, fmt.Errorf("%s: entity of the wrong type got %s expected %s: %w",
 					path, val[len(val)-1], sub.Name, ErrInvalidEntityFormat)
+			}
+			if key == "__entity" {
+				return val, nil
 			}
 			children[key] = val
 			continue
@@ -174,6 +177,9 @@ func walkMap(path string, v reflect.Value, shape map[string]*EntityShape) (engin
 			val, err := specialExtension(path, kind, iter.Value())
 			if err != nil {
 				return nil, err
+			}
+			if key == "__extn" {
+				return val, nil
 			}
 			children[key] = val
 			continue

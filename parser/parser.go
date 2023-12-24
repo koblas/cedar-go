@@ -360,13 +360,12 @@ func (p *parser) parseEntity() *cst.EntityName {
 // ----------------------------------------------------------------------------
 //
 // Primary ::= LITERAL
-//
-//	| VAR
-//	| Entity
-//	| ExtFun '(' [ExprList] ')'
-//	| '(' Expr ')'
-//	| '[' [ExprList] ']'
-//	| '{' [RecInits] '}'
+// | VAR
+// | Entity
+// | ExtFun '(' [ExprList] ')'
+// | '(' Expr ')'
+// | '[' [ExprList] ']'
+// | '{' [RecInits] '}'
 func (p *parser) parsePrimary() cst.Expr {
 	if p.trace {
 		defer un(trace(p, "Primary"))
