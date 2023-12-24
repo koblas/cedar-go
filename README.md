@@ -1,9 +1,11 @@
 # Cedar Go
 
-[![Build Status](https://github.com/open-policy-agent/opa/workflows/Post%20Merge/badge.svg?branch=main)](https://github.com/open-policy-agent/opa/actions)
-[![Go Report Card](https://goreportcard.com/badge/open-policy-agent/opa)](https://goreportcard.com/report/open-policy-agent/opa)
-[![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1768/badge)](https://bestpractices.coreinfrastructure.org/projects/1768)
-[![Netlify Status](https://api.netlify.com/api/v1/badges/4a0a092a-8741-4826-a28f-826d4a576cab/deploy-status)](https://app.netlify.com/sites/openpolicyagent/deploys)
+[![Go Reference](https://pkg.go.dev/badge/github.com/koblas/cedar-go.svg)](https://pkg.go.dev/github.com/koblas/cedar-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/koblas/cedar-go)](https://goreportcard.com/report/github.com/koblas/cedar-go)
+[![Build Status](https://github.com/koblas/cedar-go/actions/workflows/ci/badge.svg?branch=main)](https://github.com/koblas/cedar-go/actions)
+[![GoDoc](https://pkg.go.dev/badge/github.com/koblas/cedar-go)](https://pkg.go.dev/github.com/koblas/cedar-go)
+
+<!-- [![CII Best Practices](https://bestpractices.coreinfrastructure.org/TODO)](https://bestpractices.coreinfrastructure.org/TODO) -->
 
 Cedar Go is a pure Go implementation of the [Cedar](https://www.cedarpolicy.com/) policy language.
 
@@ -47,12 +49,12 @@ Cedar represents principals, resources, and actions as entities. An entity has a
 Now, let's test our policy with the CLI:
 
 ```sh
- go run cmd/authorize.go \
-    --policies policy.cedar \
-    --entities entities.json \
-    --principal 'User::"alice"' \
-    --action 'Action::"view"' \
-    --resource 'Photo::"VacationPhoto94.jpg"'
+go run cmd/main.go \
+  --policies example/data/policy.cedar \
+  --entities example/data/entities.json \
+  --principal 'User::"alice"' \
+  --action 'Action::"view"' \
+  --resource 'Photo::"VacationPhoto94.jpg"'
 ```
 
 CLI output:
