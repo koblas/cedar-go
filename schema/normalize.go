@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/koblas/cedar-go/core/ast"
+	"github.com/koblas/cedar-go/engine"
 )
 
 func unwrapInterface(v reflect.Value) reflect.Value {
@@ -16,9 +16,9 @@ func unwrapInterface(v reflect.Value) reflect.Value {
 	return v
 }
 
-func walkSlice(path string, v reflect.Value, shape *EntityShape) (ast.NamedType, error) {
+func walkSlice(path string, v reflect.Value, shape *EntityShape) (engine.NamedType, error) {
 	// Prefer empty list over nil
-	result := ast.SetValue{}
+	result := engine.SetValue{}
 	for i := 0; i < v.Len(); i++ {
 		v, err := walkValue(fmt.Sprintf("%s.%d", path, i), v.Index(i), shape)
 		if err != nil {
@@ -29,7 +29,7 @@ func walkSlice(path string, v reflect.Value, shape *EntityShape) (ast.NamedType,
 	return result, nil
 }
 
-func specialExtension(path string, name string, v reflect.Value) (ast.NamedType, error) {
+func specialExtension(path string, name string, v reflect.Value) (engine.NamedType, error) {
 	v = unwrapInterface(v)
 
 	var fn string
@@ -79,14 +79,14 @@ func specialExtension(path string, name string, v reflect.Value) (ast.NamedType,
 
 	switch fn {
 	case "ip", "ipaddr":
-		return ast.NewIpValue(value)
+		return engine.NewIpValue(value)
 	case "decimal":
-		return ast.NewDecimalValue(value)
+		return engine.NewDecimalValue(value)
 	}
 	return nil, fmt.Errorf("unknown extension type %s: %w", fn, ErrInvalidEntityFormat)
 }
 
-func specialEntity(path string, v reflect.Value, allowUnderscore bool) (ast.EntityValue, error) {
+func specialEntity(path string, v reflect.Value, allowUnderscore bool) (engine.EntityValue, error) {
 	v = unwrapInterface(v)
 	if v.Kind() != reflect.Map {
 		return nil, fmt.Errorf("%s: expected map got %s for entity: %w", path, v.Kind().String(), ErrInvalidEntityFormat)
@@ -124,11 +124,11 @@ func specialEntity(path string, v reflect.Value, allowUnderscore bool) (ast.Enti
 		return nil, fmt.Errorf("%s: 'type' type not string got %s for entity: %w", path, kind.Kind().String(), ErrInvalidEntityFormat)
 	}
 
-	return ast.NewEntityValue(kind.String(), id.String()), nil
+	return engine.NewEntityValue(kind.String(), id.String()), nil
 }
 
-func walkMap(path string, v reflect.Value, shape map[string]*EntityShape) (ast.NamedType, error) {
-	children := map[string]ast.NamedType{}
+func walkMap(path string, v reflect.Value, shape map[string]*EntityShape) (engine.NamedType, error) {
+	children := map[string]engine.NamedType{}
 	iter := v.MapRange()
 
 	for iter.Next() {
@@ -197,11 +197,11 @@ func walkMap(path string, v reflect.Value, shape map[string]*EntityShape) (ast.N
 		return nil, fmt.Errorf("%s: required field %s not provided: %w", path, key, ErrInvalidEntityFormat)
 	}
 
-	return ast.NewVarValue(children), nil
+	return engine.NewVarValue(children), nil
 }
 
-func walkStruct(path string, v reflect.Value, shape map[string]*EntityShape) (ast.NamedType, error) {
-	children := map[string]ast.NamedType{}
+func walkStruct(path string, v reflect.Value, shape map[string]*EntityShape) (engine.NamedType, error) {
+	children := map[string]engine.NamedType{}
 
 	t := v.Type()
 
@@ -232,10 +232,10 @@ func walkStruct(path string, v reflect.Value, shape map[string]*EntityShape) (as
 		children[name] = val
 	}
 
-	return ast.NewVarValue(children), nil
+	return engine.NewVarValue(children), nil
 }
 
-func walkValue(path string, v reflect.Value, shape *EntityShape) (ast.NamedType, error) {
+func walkValue(path string, v reflect.Value, shape *EntityShape) (engine.NamedType, error) {
 	// fmt.Printf("Visiting %v\n", v)
 	// Indirect through pointers and interfaces
 	for v.Kind() == reflect.Ptr || v.Kind() == reflect.Interface {
@@ -298,28 +298,28 @@ func walkValue(path string, v reflect.Value, shape *EntityShape) (ast.NamedType,
 		if shape != nil && shape.Type != SHAPE_BOOL {
 			return nil, fmt.Errorf("unexpected type at key %s expected bool: %w", "", ErrInvalidEntityFormat)
 		}
-		return ast.BoolValue(v.Bool()), nil
+		return engine.BoolValue(v.Bool()), nil
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		if shape != nil && shape.Type != SHAPE_LONG {
 			return nil, fmt.Errorf("unexpected type at key %s expected long: %w", "", ErrInvalidEntityFormat)
 		}
-		return ast.IntValue(v.Int()), nil
+		return engine.IntValue(v.Int()), nil
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		if shape != nil && shape.Type != SHAPE_LONG {
 			return nil, fmt.Errorf("unexpected type at key %s expected long: %w", "", ErrInvalidEntityFormat)
 		}
-		return ast.IntValue(int(v.Uint())), nil
+		return engine.IntValue(int(v.Uint())), nil
 	case reflect.Float32, reflect.Float64:
 		if shape != nil && shape.Type != SHAPE_LONG {
 			return nil, fmt.Errorf("unexpected type at key %s expected long: %w", "", ErrInvalidEntityFormat)
 		}
-		return ast.IntValue(int(v.Float())), nil
-		// return ast.StrValue(fmt.Sprintf("%f", v.Float())), nil
+		return engine.IntValue(int(v.Float())), nil
+		// return engine.StrValue(fmt.Sprintf("%f", v.Float())), nil
 	case reflect.String:
 		if shape != nil && shape.Type != SHAPE_STRING {
 			return nil, fmt.Errorf("unexpected type at key %s expected string: %w", "", ErrInvalidEntityFormat)
 		}
-		return ast.StrValue(v.String()), nil
+		return engine.StrValue(v.String()), nil
 
 		// Not supported
 		// case reflect.Uintptr:
@@ -334,7 +334,7 @@ func walkValue(path string, v reflect.Value, shape *EntityShape) (ast.NamedType,
 	return nil, fmt.Errorf("unexpected type %s: %w", v.Kind().String(), ErrUnsupportedType)
 }
 
-func (schema *Schema) findActionShape(action, principal, resource ast.EntityValue) *EntityShape {
+func (schema *Schema) findActionShape(action, principal, resource engine.EntityValue) *EntityShape {
 	var namespace string
 	nlen := 0
 	if len(action) > 2 {
@@ -369,14 +369,14 @@ func (schema *Schema) findActionShape(action, principal, resource ast.EntityValu
 	return rules.Context
 }
 
-func (schema *Schema) NormalizeContext(input any, principal, action, resource ast.EntityValue) (*ast.VarValue, error) {
+func (schema *Schema) NormalizeContext(input any, principal, action, resource engine.EntityValue) (*engine.VarValue, error) {
 	shape := schema.findActionShape(action, principal, resource)
 
 	output, err := walkValue("", reflect.ValueOf(input), shape)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse context: %s", err)
 	}
-	varval, ok := output.(*ast.VarValue)
+	varval, ok := output.(*engine.VarValue)
 	if !ok {
 		return nil, fmt.Errorf("expected variable type got=%s: %w", output.TypeName(), ErrUnsupportedType)
 	}
@@ -393,7 +393,7 @@ func (schema *Schema) NormalizeEntites(input JsonEntities) (EntityStore, error) 
 			return nil, err
 		}
 
-		var parents []ast.EntityValue
+		var parents []engine.EntityValue
 		for _, item := range item.Parents {
 			ent, err := specialEntity("", reflect.ValueOf(item), true)
 
@@ -413,7 +413,7 @@ func (schema *Schema) NormalizeEntites(input JsonEntities) (EntityStore, error) 
 		if err != nil {
 			return nil, err
 		}
-		varval, ok := output.(*ast.VarValue)
+		varval, ok := output.(*engine.VarValue)
 		if !ok {
 			return nil, fmt.Errorf("expected variable type got=%s: %w", output.TypeName(), ErrUnsupportedType)
 		}

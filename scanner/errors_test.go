@@ -7,8 +7,8 @@ package scanner_test
 import (
 	"fmt"
 
-	"github.com/koblas/cedar-go/core/scanner"
-	"github.com/koblas/cedar-go/core/token"
+	"github.com/koblas/cedar-go/scanner"
+	"github.com/koblas/cedar-go/token"
 )
 
 func ExampleScanner_Scan() {

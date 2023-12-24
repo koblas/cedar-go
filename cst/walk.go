@@ -64,6 +64,6 @@ func Walk(visitor Visitor, node Node) {
 		//
 		// Ignore these nodes, shouldn't happen
 	default:
-		panic(fmt.Sprintf("ast.Walk: unexpected node type %T", n))
+		panic(fmt.Sprintf("engine.Walk: unexpected node type %T", n))
 	}
 }

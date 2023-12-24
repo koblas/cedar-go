@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/koblas/cedar-go/core/token"
+	"github.com/koblas/cedar-go/token"
 )
 
 var fset = token.NewFileSet()

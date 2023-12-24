@@ -12,9 +12,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/koblas/cedar-go/core/ast"
-	"github.com/koblas/cedar-go/core/cst"
-	"github.com/koblas/cedar-go/core/token"
+	"github.com/koblas/cedar-go/cst"
+	"github.com/koblas/cedar-go/engine"
+	"github.com/koblas/cedar-go/token"
 )
 
 // If src != nil, readSource converts src to a []byte if possible;
@@ -112,14 +112,14 @@ func ParseFile(fset *token.FileSet, filename string, src interface{}, mode Mode)
 	return
 }
 
-func ParseRules(src string) (ast.PolicyList, error) {
+func ParseRules(src string) (engine.PolicyList, error) {
 	fset := token.NewFileSet()
 	data, err := ParseFile(fset, "", src, 0)
 	if err != nil {
 		return nil, err
 	}
 
-	var policies ast.PolicyList
+	var policies engine.PolicyList
 	// There is only one
 	fset.Iterate(func(file *token.File) bool {
 		policies, err = cst.ToAst(file, data)
@@ -130,14 +130,14 @@ func ParseRules(src string) (ast.PolicyList, error) {
 	return policies, err
 }
 
-func ParseRulesTrace(src string) (ast.PolicyList, error) {
+func ParseRulesTrace(src string) (engine.PolicyList, error) {
 	fset := token.NewFileSet()
 	data, err := ParseFile(fset, "", src, Trace)
 	if err != nil {
 		return nil, err
 	}
 
-	var policies ast.PolicyList
+	var policies engine.PolicyList
 	// There is only one
 	fset.Iterate(func(file *token.File) bool {
 		policies, err = cst.ToAst(file, data)

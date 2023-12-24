@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/koblas/cedar-go/core/ast"
+	"github.com/koblas/cedar-go/engine"
 )
 
 var ErrInvalidSchema = errors.New("invalid schema definition")
@@ -364,7 +364,7 @@ func LoadSchema(reader io.Reader) (*Schema, error) {
 	return schema, nil
 }
 
-func (schema *Schema) FindDef(entity ast.EntityValue) (*EntityShape, error) {
+func (schema *Schema) FindDef(entity engine.EntityValue) (*EntityShape, error) {
 	length := len(entity)
 	if length < 2 {
 		return nil, fmt.Errorf("%s: %w", entity.String(), ErrInvalidEntityFormat)

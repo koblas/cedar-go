@@ -1,11 +1,11 @@
-package ast_test
+package engine_test
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/koblas/cedar-go/core/ast"
-	"github.com/koblas/cedar-go/core/parser"
+	ast "github.com/koblas/cedar-go/engine"
+	"github.com/koblas/cedar-go/parser"
 	"github.com/stretchr/testify/assert"
 )
 

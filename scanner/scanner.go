@@ -15,7 +15,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/koblas/cedar-go/core/token"
+	"github.com/koblas/cedar-go/token"
 )
 
 // An ErrorHandler may be provided to [Scanner.Init]. If a syntax error is
@@ -254,7 +254,7 @@ func (s *Scanner) updateLineInfo(next, offs int, text []byte) {
 
 	// Put a cap on the maximum size of line and column numbers.
 	// 30 bits allows for some additional space before wrapping an int32.
-	// Keep this consistent with cmd/compile/internal/syntax.PosMax.
+	// Keep this consistent with cmd/compile/syntax.PosMax.
 	const maxLineCol = 1 << 30
 	var line, col int
 	i2, n2, ok2 := trailingDigits(text[:i-1])

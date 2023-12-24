@@ -3,9 +3,9 @@ package parser
 import (
 	"fmt"
 
-	"github.com/koblas/cedar-go/core/cst"
-	"github.com/koblas/cedar-go/core/scanner"
-	"github.com/koblas/cedar-go/core/token"
+	"github.com/koblas/cedar-go/cst"
+	"github.com/koblas/cedar-go/scanner"
+	"github.com/koblas/cedar-go/token"
 )
 
 // The parser structure holds the parser's internal state.

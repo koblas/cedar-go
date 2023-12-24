@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/koblas/cedar-go/core/schema"
+	"github.com/koblas/cedar-go/schema"
 	"github.com/stretchr/testify/assert"
 )
 

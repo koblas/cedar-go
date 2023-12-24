@@ -10,10 +10,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/koblas/cedar-go/core"
-	"github.com/koblas/cedar-go/core/ast"
-	"github.com/koblas/cedar-go/core/parser"
-	"github.com/koblas/cedar-go/core/schema"
+	cedar "github.com/koblas/cedar-go"
+	"github.com/koblas/cedar-go/engine"
+	"github.com/koblas/cedar-go/parser"
+	"github.com/koblas/cedar-go/schema"
 	"github.com/stretchr/testify/require"
 )
 
@@ -51,10 +51,10 @@ type SpecQuery struct {
 	Errors   []string `json:"errors"`
 	Reasons  []string `json:"reasons"`
 
-	Principal ast.EntityValue `json:"principal"`
-	Resource  ast.EntityValue `json:"resource"`
-	Action    ast.EntityValue `json:"action"`
-	Context   map[string]any  `json:"context"`
+	Principal engine.EntityValue `json:"principal"`
+	Resource  engine.EntityValue `json:"resource"`
+	Action    engine.EntityValue `json:"action"`
+	Context   map[string]any     `json:"context"`
 }
 
 type SpecDef struct {
@@ -135,7 +135,7 @@ func runTests(t *testing.T, dir string) {
 			store, err := schema.NormalizeEntites(entities)
 			require.NoError(t, err, "failed to load store - parse entities")
 
-			auth := core.NewAuthorizer(policy, core.WithSchema(schema), core.WithStore(store))
+			auth := cedar.NewAuthorizer(policy, cedar.WithSchema(schema), cedar.WithStore(store))
 
 			for _, query := range spec.Queries {
 				t.Run(query.Description, func(t *testing.T) {
@@ -147,7 +147,7 @@ func runTests(t *testing.T, dir string) {
 					require.NoError(t, err, "normalize context")
 
 					// fmt.Println("==== ", query.Description, path)
-					request := core.Request{
+					request := cedar.Request{
 						Principal: principal,
 						Resource:  resource,
 						Action:    action,

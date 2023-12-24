@@ -1,17 +1,17 @@
-package core
+package cedar
 
 import (
 	"context"
 
-	"github.com/koblas/cedar-go/core/ast"
-	"github.com/koblas/cedar-go/core/schema"
+	"github.com/koblas/cedar-go/engine"
+	"github.com/koblas/cedar-go/schema"
 )
 
 type Request struct {
-	Principal ast.EntityValue
-	Action    ast.EntityValue
-	Resource  ast.EntityValue
-	Context   *ast.VarValue
+	Principal engine.EntityValue
+	Action    engine.EntityValue
+	Resource  engine.EntityValue
+	Context   *engine.VarValue
 }
 
 type Detail struct {
@@ -27,9 +27,9 @@ type Authorizer interface {
 //
 
 type SchemaAuthorizer struct {
-	Policies ast.PolicyList
+	Policies engine.PolicyList
 	Schema   *schema.Schema
-	Store    ast.Store
+	Store    engine.Store
 }
 
 type EmptyStore struct{}
@@ -45,13 +45,13 @@ func WithSchema(s *schema.Schema) Option {
 	}
 }
 
-func WithStore(s ast.Store) Option {
+func WithStore(s engine.Store) Option {
 	return func(sa *SchemaAuthorizer) {
 		sa.Store = s
 	}
 }
 
-func NewAuthorizer(p ast.PolicyList, options ...Option) *SchemaAuthorizer {
+func NewAuthorizer(p engine.PolicyList, options ...Option) *SchemaAuthorizer {
 	conf := SchemaAuthorizer{
 		Policies: p,
 		Store:    schema.NewEmptyStore(),
@@ -65,7 +65,7 @@ func NewAuthorizer(p ast.PolicyList, options ...Option) *SchemaAuthorizer {
 }
 
 func (auth *SchemaAuthorizer) IsAuthorizedDetail(ctx context.Context, request *Request) (*Detail, error) {
-	req := ast.Request{
+	req := engine.Request{
 		Principal: request.Principal,
 		Action:    request.Action,
 		Resource:  request.Resource,
@@ -74,13 +74,13 @@ func (auth *SchemaAuthorizer) IsAuthorizedDetail(ctx context.Context, request *R
 		Trace:     false,
 	}
 
-	result, err := ast.Eval(ctx, auth.Policies, &req)
+	result, err := engine.Eval(ctx, auth.Policies, &req)
 
 	if err != nil {
 		return nil, err
 	}
 	return &Detail{
-		IsAllowed: result.Decision == ast.Allow,
+		IsAllowed: result.Decision == engine.Allow,
 		Matches:   result.Reasons,
 	}, nil
 }

@@ -5,19 +5,19 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/koblas/cedar-go/core/ast"
-	"github.com/koblas/cedar-go/core/token"
+	"github.com/koblas/cedar-go/engine"
+	"github.com/koblas/cedar-go/token"
 )
 
 type astBuilder interface {
-	ToAst(file *token.File) (ast.EvalNode, error)
+	ToAst(file *token.File) (engine.EvalNode, error)
 }
 
 var ErrInternal = errors.New("internal consistency error")
-var ErrExpectFile = errors.New("expected ast.File input")
+var ErrExpectFile = errors.New("expected engine.File input")
 
 // Helper to unpack a node
-func toEvalNode(file *token.File, node any, msg string) (ast.EvalNode, error) {
+func toEvalNode(file *token.File, node any, msg string) (engine.EvalNode, error) {
 	builder, ok := node.(astBuilder)
 	if !ok || builder == nil {
 		return nil, fmt.Errorf("invalid %s type %T: %w", msg, node, ErrInternal)
@@ -129,27 +129,27 @@ func unquote(str string) string {
 }
 
 var (
-	trueValue = &ast.ValueNode{
-		Value: ast.BoolValue(true),
+	trueValue = &engine.ValueNode{
+		Value: engine.BoolValue(true),
 	}
-	falseValue = &ast.ValueNode{
-		Value: ast.BoolValue(false),
+	falseValue = &engine.ValueNode{
+		Value: engine.BoolValue(false),
 	}
 )
 
-func (n *BasicLit) ToAst(file *token.File) (ast.EvalNode, error) {
+func (n *BasicLit) ToAst(file *token.File) (engine.EvalNode, error) {
 	switch n.Kind {
 	case token.STRINGLIT:
-		return &ast.ValueNode{
-			Value: ast.StrValue(unquote(n.Value)),
+		return &engine.ValueNode{
+			Value: engine.StrValue(unquote(n.Value)),
 		}, nil
 	case token.INT:
 		value, err := strconv.Atoi(n.Value)
 		if err != nil {
 			return nil, err
 		}
-		return &ast.ValueNode{
-			Value: ast.IntValue(value),
+		return &engine.ValueNode{
+			Value: engine.IntValue(value),
 		}, nil
 	case token.TRUE:
 		return trueValue, nil
@@ -158,28 +158,28 @@ func (n *BasicLit) ToAst(file *token.File) (ast.EvalNode, error) {
 
 	// This needs to do a variable lookup from the runtime context
 	case token.PRINCIPAL:
-		return &ast.Reference{
+		return &engine.Reference{
 			StartPos: file.Position(n.Pos()),
-			Source:   ast.PrincipalPrincipal,
+			Source:   engine.PrincipalPrincipal,
 		}, nil
 	case token.ACTION:
-		return &ast.Reference{
+		return &engine.Reference{
 			StartPos: file.Position(n.Pos()),
-			Source:   ast.PrincipalAction,
+			Source:   engine.PrincipalAction,
 		}, nil
 	case token.RESOURCE:
-		return &ast.Reference{
+		return &engine.Reference{
 			StartPos: file.Position(n.Pos()),
-			Source:   ast.PrincipalResource,
+			Source:   engine.PrincipalResource,
 		}, nil
 	case token.CONTEXT:
-		return &ast.Reference{
+		return &engine.Reference{
 			StartPos: file.Position(n.Pos()),
-			Source:   ast.PrincipalContext,
+			Source:   engine.PrincipalContext,
 		}, nil
 
 	case token.IDENTIFER:
-		return &ast.Identifier{
+		return &engine.Identifier{
 			StartPos: file.Position(n.Pos()),
 			Value:    n.Value,
 		}, nil
@@ -188,7 +188,7 @@ func (n *BasicLit) ToAst(file *token.File) (ast.EvalNode, error) {
 	panic(fmt.Sprintf("%s: invalid literal type %v", file.Position(n.Pos()), n.Kind.String()))
 }
 
-func (n *EntityName) ToAst(file *token.File) (ast.EvalNode, error) {
+func (n *EntityName) ToAst(file *token.File) (engine.EvalNode, error) {
 	l := len(n.Path) - 1
 	var parts []string
 	for _, item := range n.Path[0:l] {
@@ -197,37 +197,37 @@ func (n *EntityName) ToAst(file *token.File) (ast.EvalNode, error) {
 
 	parts = append(parts, unquote(n.Path[l].Value))
 
-	value := ast.EntityValue(parts)
+	value := engine.EntityValue(parts)
 
-	return &ast.ValueNode{
+	return &engine.ValueNode{
 		Value: value,
 	}, nil
 }
 
-func (n *UnaryExpr) ToAst(file *token.File) (ast.EvalNode, error) {
+func (n *UnaryExpr) ToAst(file *token.File) (engine.EvalNode, error) {
 	left, err := toEvalNode(file, n.X, "left")
 	if err != nil {
 		return nil, err
 	}
 
-	var opcode ast.Operand
+	var opcode engine.Operand
 	switch n.Op {
 	case token.SUB:
-		opcode = ast.OpSub
+		opcode = engine.OpSub
 	case token.NOT:
-		opcode = ast.OpNot
+		opcode = engine.OpNot
 	default:
 		return nil, fmt.Errorf("unimplemented unary opcode %s: %w", n.Op.String(), ErrInternal)
 	}
 
-	return &ast.UnaryExpr{
+	return &engine.UnaryExpr{
 		StartPos: file.Position(n.Pos()),
 		Op:       opcode,
 		Left:     left,
 	}, nil
 }
 
-func (n *BinaryExpr) ToAst(file *token.File) (ast.EvalNode, error) {
+func (n *BinaryExpr) ToAst(file *token.File) (engine.EvalNode, error) {
 	left, err := toEvalNode(file, n.X, "left")
 	if err != nil {
 		return nil, err
@@ -237,51 +237,51 @@ func (n *BinaryExpr) ToAst(file *token.File) (ast.EvalNode, error) {
 		return nil, err
 	}
 
-	var opcode ast.Operand
+	var opcode engine.Operand
 	switch n.Op {
 	case token.EQL:
-		opcode = ast.OpEql
+		opcode = engine.OpEql
 	case token.LSS:
-		opcode = ast.OpLss
+		opcode = engine.OpLss
 	case token.GTR:
-		opcode = ast.OpGtr
+		opcode = engine.OpGtr
 	case token.NEQ:
-		opcode = ast.OpNeq
+		opcode = engine.OpNeq
 	case token.LEQ:
-		opcode = ast.OpLeq
+		opcode = engine.OpLeq
 	case token.GEQ:
-		opcode = ast.OpGeq
+		opcode = engine.OpGeq
 
 	case token.LAND:
-		opcode = ast.OpLand
+		opcode = engine.OpLand
 	case token.LOR:
-		opcode = ast.OpLor
+		opcode = engine.OpLor
 	case token.NOT:
-		opcode = ast.OpNot
+		opcode = engine.OpNot
 
 	case token.ADD:
-		opcode = ast.OpAdd
+		opcode = engine.OpAdd
 	case token.SUB:
-		opcode = ast.OpSub
+		opcode = engine.OpSub
 	case token.MUL:
-		opcode = ast.OpMul
+		opcode = engine.OpMul
 	case token.QUO:
-		opcode = ast.OpQuo
+		opcode = engine.OpQuo
 	case token.REM:
-		opcode = ast.OpRem
+		opcode = engine.OpRem
 
 	case token.IN:
-		opcode = ast.OpIn
+		opcode = engine.OpIn
 	case token.LIKE:
-		opcode = ast.OpLike
+		opcode = engine.OpLike
 	case token.HAS:
-		opcode = ast.OpHas
+		opcode = engine.OpHas
 
 	default:
 		return nil, fmt.Errorf("unimplemented binary opcode %s: %w", n.Op.String(), ErrInternal)
 	}
 
-	return &ast.BinaryExpr{
+	return &engine.BinaryExpr{
 		StartPos: file.Position(n.Pos()),
 		Op:       opcode,
 		Left:     left,
@@ -289,11 +289,11 @@ func (n *BinaryExpr) ToAst(file *token.File) (ast.EvalNode, error) {
 	}, nil
 }
 
-func (n *ParenExpr) ToAst(file *token.File) (ast.EvalNode, error) {
+func (n *ParenExpr) ToAst(file *token.File) (engine.EvalNode, error) {
 	return toEvalNode(file, n.X, "left")
 }
 
-func (n *IfExpr) ToAst(file *token.File) (ast.EvalNode, error) {
+func (n *IfExpr) ToAst(file *token.File) (engine.EvalNode, error) {
 	ifExpr, err := toEvalNode(file, n.Condition, "if")
 	if err != nil {
 		return nil, err
@@ -306,7 +306,7 @@ func (n *IfExpr) ToAst(file *token.File) (ast.EvalNode, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &ast.IfExpr{
+	return &engine.IfExpr{
 		StartPos: file.Position(n.Pos()),
 		If:       ifExpr,
 		Then:     thenExpr,
@@ -314,8 +314,8 @@ func (n *IfExpr) ToAst(file *token.File) (ast.EvalNode, error) {
 	}, nil
 }
 
-func (n *ReceiverInits) ToAst(file *token.File) (ast.EvalNode, error) {
-	var variables []ast.VariablePair
+func (n *ReceiverInits) ToAst(file *token.File) (engine.EvalNode, error) {
+	var variables []engine.VariablePair
 
 	for _, item := range n.Exprs {
 		var key string
@@ -329,21 +329,21 @@ func (n *ReceiverInits) ToAst(file *token.File) (ast.EvalNode, error) {
 		if err != nil {
 			return nil, err
 		}
-		pair := ast.VariablePair{
+		pair := engine.VariablePair{
 			Key:   key,
 			Value: value,
 		}
 		variables = append(variables, pair)
 	}
 
-	return &ast.VariableDef{
+	return &engine.VariableDef{
 		StartPos: file.Position(n.Pos()),
 		Pairs:    variables,
 	}, nil
 }
 
-func (n *SetExpr) ToAst(file *token.File) (ast.EvalNode, error) {
-	exprs := []ast.EvalNode{}
+func (n *SetExpr) ToAst(file *token.File) (engine.EvalNode, error) {
+	exprs := []engine.EvalNode{}
 	for _, item := range n.Exprs {
 		expr, err := toEvalNode(file, item, "set")
 		if err != nil {
@@ -352,14 +352,14 @@ func (n *SetExpr) ToAst(file *token.File) (ast.EvalNode, error) {
 
 		exprs = append(exprs, expr)
 	}
-	return &ast.ListExpr{
+	return &engine.ListExpr{
 		StartPos: file.Position(n.Pos()),
 		AsSet:    true,
 		Exprs:    exprs,
 	}, nil
 }
 
-func (n *MemberExpr) ToAst(file *token.File) (ast.EvalNode, error) {
+func (n *MemberExpr) ToAst(file *token.File) (engine.EvalNode, error) {
 	left, err := toEvalNode(file, n.Primary, "member")
 	if err != nil {
 		return nil, err
@@ -372,7 +372,7 @@ func (n *MemberExpr) ToAst(file *token.File) (ast.EvalNode, error) {
 		}
 
 		if item.IsFunc {
-			var args []ast.EvalNode
+			var args []engine.EvalNode
 
 			for _, arg := range item.Args {
 				expr, err := toEvalNode(file, arg, "any")
@@ -382,16 +382,16 @@ func (n *MemberExpr) ToAst(file *token.File) (ast.EvalNode, error) {
 				args = append(args, expr)
 			}
 
-			left = &ast.FunctionCall{
+			left = &engine.FunctionCall{
 				StartPos: file.Position(n.Pos()),
 				Name:     item.Ident.Value,
 				Self:     left,
 				Args:     args,
 			}
 		} else {
-			left = &ast.BinaryExpr{
+			left = &engine.BinaryExpr{
 				StartPos: file.Position(n.Pos()),
-				Op:       ast.OpLookup,
+				Op:       engine.OpLookup,
 				Left:     left,
 				Right:    lit,
 			}
@@ -400,15 +400,15 @@ func (n *MemberExpr) ToAst(file *token.File) (ast.EvalNode, error) {
 
 	return left, nil
 
-	// return &ast.Reference{
+	// return &engine.Reference{
 	// 	StartPos: file.Position(n.Pos()),
 	// 	Source:   source,
 	// }, nil
 
 }
 
-func (n *FunctionCall) ToAst(file *token.File) (ast.EvalNode, error) {
-	var args []ast.EvalNode
+func (n *FunctionCall) ToAst(file *token.File) (engine.EvalNode, error) {
+	var args []engine.EvalNode
 
 	for _, arg := range n.Args {
 		expr, err := toEvalNode(file, arg, "any")
@@ -419,7 +419,7 @@ func (n *FunctionCall) ToAst(file *token.File) (ast.EvalNode, error) {
 	}
 
 	// Handle function call
-	return &ast.FunctionCall{
+	return &engine.FunctionCall{
 		StartPos: file.Position(n.Pos()),
 		Name:     n.Name,
 		Self:     nil,
@@ -427,13 +427,13 @@ func (n *FunctionCall) ToAst(file *token.File) (ast.EvalNode, error) {
 	}, nil
 }
 
-func (n *Condition) ToAst(file *token.File) (*ast.PolicyCondition, error) {
-	var condition ast.Condition
+func (n *Condition) ToAst(file *token.File) (*engine.PolicyCondition, error) {
+	var condition engine.Condition
 	switch n.Condition {
 	case token.WHEN:
-		condition = ast.ConditionWhen
+		condition = engine.ConditionWhen
 	case token.UNLESS:
-		condition = ast.ConditionUnless
+		condition = engine.ConditionUnless
 	default:
 		return nil, fmt.Errorf("Condition: invalid condition type %s: %w", n.Condition.String(), ErrInternal)
 	}
@@ -443,33 +443,33 @@ func (n *Condition) ToAst(file *token.File) (*ast.PolicyCondition, error) {
 		return nil, err
 	}
 
-	return &ast.PolicyCondition{
+	return &engine.PolicyCondition{
 		Condition: condition,
 		Expr:      aexpr,
 	}, nil
 }
 
-func (n *Variable) ToAst(file *token.File) (ast.EvalNode, error) {
+func (n *Variable) ToAst(file *token.File) (engine.EvalNode, error) {
 	source, err := n.NameLit.ToAst(file)
 	if err != nil {
 		return nil, err
 	}
 
-	opcode := ast.OpInvalid
+	opcode := engine.OpInvalid
 	switch n.RelOp {
 	case token.EQL:
-		opcode = ast.OpEql
+		opcode = engine.OpEql
 	case token.IN:
-		opcode = ast.OpIn
+		opcode = engine.OpIn
 	case token.ILLEGAL:
 		// nothing
 	default:
 		return nil, fmt.Errorf("unimplemented unary opcode in variables %s: %w", n.RelOp.String(), ErrInternal)
 	}
 
-	var expr ast.EvalNode
-	if opcode != ast.OpInvalid {
-		var right ast.EvalNode
+	var expr engine.EvalNode
+	if opcode != engine.OpInvalid {
+		var right engine.EvalNode
 		if n.SetExpr != nil {
 			right, err = n.SetExpr.ToAst(file)
 			if err != nil {
@@ -484,7 +484,7 @@ func (n *Variable) ToAst(file *token.File) (ast.EvalNode, error) {
 		if err != nil {
 			return nil, err
 		}
-		expr = &ast.BinaryExpr{
+		expr = &engine.BinaryExpr{
 			StartPos: file.Position(n.Pos()),
 			Op:       opcode,
 			Left:     source,
@@ -500,13 +500,13 @@ func (n *Variable) ToAst(file *token.File) (ast.EvalNode, error) {
 		if err != nil {
 			return nil, err
 		}
-		isExpr := &ast.BinaryExpr{
-			Op:    ast.OpIs,
+		isExpr := &engine.BinaryExpr{
+			Op:    engine.OpIs,
 			Left:  source,
 			Right: rval,
 		}
 
-		expr = &ast.IfExpr{
+		expr = &engine.IfExpr{
 			If:   isExpr,
 			Then: expr,
 			Else: falseValue,
@@ -516,7 +516,7 @@ func (n *Variable) ToAst(file *token.File) (ast.EvalNode, error) {
 	return expr, nil
 }
 
-func (n *PolicyStmt) ToAst(file *token.File) (*ast.Policy, error) {
+func (n *PolicyStmt) ToAst(file *token.File) (*engine.Policy, error) {
 	var annotations map[string]string
 
 	if len(n.Annotations) != 0 {
@@ -527,7 +527,7 @@ func (n *PolicyStmt) ToAst(file *token.File) (*ast.Policy, error) {
 		}
 	}
 
-	var conditions []*ast.PolicyCondition
+	var conditions []*engine.PolicyCondition
 	for _, item := range n.Conditions {
 		value, err := item.ToAst(file)
 		if err != nil {
@@ -536,12 +536,12 @@ func (n *PolicyStmt) ToAst(file *token.File) (*ast.Policy, error) {
 		conditions = append(conditions, value)
 	}
 
-	var effect ast.PolicyEffect
+	var effect engine.PolicyEffect
 	switch n.Effect {
 	case token.PERMIT:
-		effect = ast.EffectPermit
+		effect = engine.EffectPermit
 	case token.FORBID:
-		effect = ast.EffectForbid
+		effect = engine.EffectForbid
 	}
 
 	p, err := n.Scope.Principal.ToAst(file)
@@ -557,8 +557,8 @@ func (n *PolicyStmt) ToAst(file *token.File) (*ast.Policy, error) {
 		return nil, err
 	}
 
-	var ifExpr ast.EvalNode
-	for _, c := range []ast.EvalNode{p, r, a} {
+	var ifExpr engine.EvalNode
+	for _, c := range []engine.EvalNode{p, r, a} {
 		if c == trueValue {
 			continue
 		}
@@ -566,8 +566,8 @@ func (n *PolicyStmt) ToAst(file *token.File) (*ast.Policy, error) {
 			ifExpr = c
 			continue
 		}
-		ifExpr = &ast.BinaryExpr{
-			Op:    ast.OpLand,
+		ifExpr = &engine.BinaryExpr{
+			Op:    engine.OpLand,
 			Left:  c,
 			Right: ifExpr,
 		}
@@ -576,7 +576,7 @@ func (n *PolicyStmt) ToAst(file *token.File) (*ast.Policy, error) {
 		ifExpr = trueValue
 	}
 
-	return &ast.Policy{
+	return &engine.Policy{
 		StartPos:    file.Position(n.Pos()),
 		Effect:      effect,
 		If:          ifExpr,
@@ -585,8 +585,8 @@ func (n *PolicyStmt) ToAst(file *token.File) (*ast.Policy, error) {
 	}, nil
 }
 
-func (n *File) ToAst(file *token.File) (ast.PolicyList, error) {
-	result := ast.PolicyList{}
+func (n *File) ToAst(file *token.File) (engine.PolicyList, error) {
+	result := engine.PolicyList{}
 
 	for idx, item := range n.Statements {
 		if b, ok := item.(*PolicyStmt); ok {
@@ -606,7 +606,7 @@ func (n *File) ToAst(file *token.File) (ast.PolicyList, error) {
 	return result, nil
 }
 
-func ToAst(file *token.File, node Node) (ast.PolicyList, error) {
+func ToAst(file *token.File, node Node) (engine.PolicyList, error) {
 	b, ok := node.(*File)
 	if !ok {
 		return nil, ErrExpectFile

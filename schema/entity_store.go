@@ -3,13 +3,13 @@ package schema
 import (
 	"errors"
 
-	"github.com/koblas/cedar-go/core/ast"
+	"github.com/koblas/cedar-go/engine"
 )
 
 type EntityStoreItem struct {
-	entity  ast.EntityValue
-	parents []ast.EntityValue
-	values  *ast.VarValue
+	entity  engine.EntityValue
+	parents []engine.EntityValue
+	values  *engine.VarValue
 }
 
 type EntityStore map[string]EntityStoreItem
@@ -18,35 +18,35 @@ type EmptyStore struct{}
 
 var ErrNotFoundInStore = errors.New("not found in store")
 
-var _ ast.Store = (*EmptyStore)(nil)
+var _ engine.Store = (*EmptyStore)(nil)
 
 func NewEmptyStore() *EmptyStore {
 	return &EmptyStore{}
 }
 
-func (store *EmptyStore) Get(key ast.EntityValue) (ast.EvalValue, error) {
+func (store *EmptyStore) Get(key engine.EntityValue) (engine.EvalValue, error) {
 	return nil, nil
 }
 
-func (store *EmptyStore) GetParents(key ast.EntityValue) ([]ast.EntityValue, error) {
+func (store *EmptyStore) GetParents(key engine.EntityValue) ([]engine.EntityValue, error) {
 	return nil, nil
 }
 
-var _ ast.Store = (EntityStore)(nil)
+var _ engine.Store = (EntityStore)(nil)
 
-func (store EntityStore) Get(key ast.EntityValue) (ast.EvalValue, error) {
+func (store EntityStore) Get(key engine.EntityValue) (engine.EvalValue, error) {
 	value, found := store[key.String()]
 
 	if !found {
-		return nil, ast.ErrValueNotFound
+		return nil, engine.ErrValueNotFound
 	}
 
 	return value.values, nil
 }
 
-func (store EntityStore) GetParents(key ast.EntityValue) ([]ast.EntityValue, error) {
-	seen := map[string]ast.EntityValue{}
-	todo := []ast.EntityValue{key}
+func (store EntityStore) GetParents(key engine.EntityValue) ([]engine.EntityValue, error) {
+	seen := map[string]engine.EntityValue{}
+	todo := []engine.EntityValue{key}
 
 	for len(todo) != 0 {
 		first := todo[0]
@@ -66,7 +66,7 @@ func (store EntityStore) GetParents(key ast.EntityValue) ([]ast.EntityValue, err
 		todo = append(todo, value.parents...)
 	}
 
-	output := []ast.EntityValue{}
+	output := []engine.EntityValue{}
 	for _, value := range seen {
 		output = append(output, value)
 	}

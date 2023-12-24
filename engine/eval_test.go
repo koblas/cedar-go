@@ -1,33 +1,33 @@
-package ast_test
+package engine_test
 
 import (
 	"context"
 	"fmt"
 	"testing"
 
-	"github.com/koblas/cedar-go/core"
-	"github.com/koblas/cedar-go/core/ast"
-	"github.com/koblas/cedar-go/core/parser"
-	"github.com/koblas/cedar-go/core/schema"
+	"github.com/koblas/cedar-go"
+	ast "github.com/koblas/cedar-go/engine"
+	"github.com/koblas/cedar-go/parser"
+	"github.com/koblas/cedar-go/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-var emptyRequest = &core.Request{
+var emptyRequest = &cedar.Request{
 	Principal: ast.EntityValue{},
 	Resource:  ast.EntityValue{},
 	Action:    ast.EntityValue{},
 }
 
-var bobRequest = &core.Request{
+var bobRequest = &cedar.Request{
 	Principal: ast.NewEntityValue("User", "bob"),
 }
 
-func evalTestRunner(t *testing.T, rules string, req *core.Request, allow bool) {
+func evalTestRunner(t *testing.T, rules string, req *cedar.Request, allow bool) {
 	policy, err := parser.ParseRules(rules)
 	assert.NoError(t, err, "parse rules")
 
-	data, err := core.NewAuthorizer(policy).IsAuthorized(context.TODO(), req)
+	data, err := cedar.NewAuthorizer(policy).IsAuthorized(context.TODO(), req)
 	assert.NoError(t, err)
 
 	if allow {
@@ -37,11 +37,11 @@ func evalTestRunner(t *testing.T, rules string, req *core.Request, allow bool) {
 	}
 }
 
-func evalTestError(t *testing.T, rules string, req *core.Request) {
+func evalTestError(t *testing.T, rules string, req *cedar.Request) {
 	policy, err := parser.ParseRules(rules)
 	assert.NoError(t, err, "parse rules")
 
-	data, err := core.NewAuthorizer(policy).IsAuthorized(context.TODO(), req)
+	data, err := cedar.NewAuthorizer(policy).IsAuthorized(context.TODO(), req)
 	assert.Error(t, err)
 	assert.Equal(t, false, data)
 }
@@ -88,7 +88,7 @@ func TestEvalEntity2(t *testing.T) {
 }
 
 func TestEvalEntityMathFalse(t *testing.T) {
-	request := core.Request{
+	request := cedar.Request{
 		Principal: ast.NewEntityValue("a", "ff\000"),
 		Resource:  ast.NewEntityValue("a", "ff\000"),
 		Action:    ast.NewEntityValue("Action", `action`),
@@ -127,7 +127,7 @@ func TestEvalEntityEval(t *testing.T) {
 		"authenticated": true,
 	}, principal, action, resource)
 
-	req := core.Request{
+	req := cedar.Request{
 		Principal: ast.NewEntityValue("User", "stacy"),
 		Resource:  ast.NewEntityValue("Photo", "vacation.jpg"),
 		Action:    ast.NewEntityValue("Action", "view"),
@@ -158,7 +158,7 @@ func TestEvalEntityEval(t *testing.T) {
 	policy, err := parser.ParseRules(rules)
 	assert.NoError(t, err, "parse rules")
 
-	data, err := core.NewAuthorizer(policy, core.WithStore(store)).IsAuthorized(context.TODO(), &req)
+	data, err := cedar.NewAuthorizer(policy, cedar.WithStore(store)).IsAuthorized(context.TODO(), &req)
 	assert.NoError(t, err)
 
 	assert.Equal(t, true, data)
@@ -188,7 +188,7 @@ func TestOps(t *testing.T) {
 
 	store, _ := schema.NormalizeEntites(entityData)
 
-	req := core.Request{
+	req := cedar.Request{
 		Principal: ast.NewEntityValue("User", "alice"),
 		Resource:  ast.NewEntityValue("Photo", "vacation.jpg"),
 		Action:    ast.NewEntityValue("Action", "view"),
@@ -242,7 +242,7 @@ func TestOps(t *testing.T) {
 			policy, err := parser.ParseRules(fmt.Sprintf(base, item.expr))
 			require.NoError(t, err, "parse rules")
 
-			auth := core.NewAuthorizer(policy, core.WithStore(store))
+			auth := cedar.NewAuthorizer(policy, cedar.WithStore(store))
 			result, err := auth.IsAuthorized(context.TODO(), &req)
 			require.NoError(t, err, "authorizer")
 
@@ -259,10 +259,10 @@ func TestFuncCall(t *testing.T) {
 				"id":   "alice",
 			},
 			Attrs: map[string]any{
-				"active":    true,
-				"disabled":  false,
-				"level":     5,
-				"breakfast": "ham and eggs",
+				"active":       true,
+				"disabled":     false,
+				"level":        5,
+				"breakfengine": "ham and eggs",
 			},
 		},
 	}
@@ -273,7 +273,7 @@ func TestFuncCall(t *testing.T) {
 
 	store, _ := schema.NormalizeEntites(entityData)
 
-	req := core.Request{
+	req := cedar.Request{
 		Principal: ast.NewEntityValue("User", "alice"),
 		Resource:  ast.NewEntityValue("Photo", "vacation.jpg"),
 		Action:    ast.NewEntityValue("Action", "view"),
@@ -287,7 +287,7 @@ func TestFuncCall(t *testing.T) {
 	`)
 	require.NoError(t, err, "parse rules")
 
-	auth := core.NewAuthorizer(policy, core.WithStore(store))
+	auth := cedar.NewAuthorizer(policy, cedar.WithStore(store))
 	result, err := auth.IsAuthorized(context.TODO(), &req)
 	require.NoError(t, err, "authorizer")
 

@@ -7,7 +7,7 @@ package cst
 import (
 	"strings"
 
-	"github.com/koblas/cedar-go/core/token"
+	"github.com/koblas/cedar-go/token"
 )
 
 // ----------------------------------------------------------------------------

@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/koblas/cedar-go/core/ast"
-	"github.com/koblas/cedar-go/core/schema"
+	"github.com/koblas/cedar-go/engine"
+	"github.com/koblas/cedar-go/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -121,11 +121,11 @@ func TestNormalizerBase(t *testing.T) {
 	store, err := sch.NormalizeEntites(entites)
 	require.NoError(t, err)
 
-	value, err := store.Get(ast.NewEntityValue("Photo", "prototype_v0.jpg"))
+	value, err := store.Get(engine.NewEntityValue("Photo", "prototype_v0.jpg"))
 	require.NoError(t, err)
 
-	vval := value.(*ast.VarValue)
-	eval, err := vval.OpLookup(ast.IdentifierValue("account"))
+	vval := value.(*engine.VarValue)
+	eval, err := vval.OpLookup(engine.IdentifierValue("account"))
 	require.NoError(t, err)
 
 	require.EqualValues(t, "entity", eval.TypeName())

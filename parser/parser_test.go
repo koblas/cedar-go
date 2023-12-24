@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/koblas/cedar-go/core/parser"
-	"github.com/koblas/cedar-go/core/token"
+	"github.com/koblas/cedar-go/parser"
+	"github.com/koblas/cedar-go/token"
 )
 
 func testRunner(t *testing.T, rules string) {

@@ -9,7 +9,7 @@ import (
 	"io"
 	"sort"
 
-	"github.com/koblas/cedar-go/core/token"
+	"github.com/koblas/cedar-go/token"
 )
 
 // In an [ErrorList], an error is represented by an *Error.
@@ -75,7 +75,7 @@ func (p ErrorList) Sort() {
 // RemoveMultiples sorts an [ErrorList] and removes all but the first error per line.
 func (p *ErrorList) RemoveMultiples() {
 	sort.Sort(p)
-	var last token.Position // initial last.Line is != any legal error line
+	var last token.Position // initial lengine.Line is != any legal error line
 	i := 0
 	for _, e := range *p {
 		if e.Pos.Filename != last.Filename || e.Pos.Line != last.Line {
