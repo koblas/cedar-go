@@ -201,7 +201,7 @@ func (n *BinaryExpr) evalNode(request *RuntimeRequest) (EvalValue, error) {
 			return nil, evalError(n, msg)
 		}
 
-		// Short circut these
+		// Short circuit these
 		lval, err := asBool(n, left)
 		if err != nil {
 			return nil, err

@@ -6,13 +6,13 @@ import (
 
 var ErrStoreNotFound = errors.New("store not found")
 
-// Store is the interface that provides a standard mechansim for
+// Store is the interface that provides a standard mechanism for
 // retreiving values from external sources during the evaluation
 // phase.
 type Store interface {
 	// Get is used in the context of `principal.active` where
 	// we are given the entity (e.g. `User:"alice"`) and should
-	// return approprate attributes for that entity. This should be
+	// return appropriate attributes for that entity. This should be
 	// a VarValue object as the current time
 	Get(EntityValue) (EvalValue, error)
 	// GetParents does a transitive lookup for a given entity as

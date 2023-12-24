@@ -89,7 +89,7 @@ func runTests(t *testing.T, dir string) {
 
 			if spec.Policies == "" {
 				fmt.Println("SKIP === ", path)
-				// Ignore anything that isn't a valid defintion
+				// Ignore anything that isn't a valid definition
 				return
 			}
 

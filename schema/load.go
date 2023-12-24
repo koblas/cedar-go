@@ -38,7 +38,7 @@ func (schema JsonSchema) verifyEntityShape(path Path, value JsonEntityShape, loo
 		}
 		noName = false
 	case "Record", "":
-		// empty string "" is a non-set defintion assume Record
+		// empty string "" is a non-set definition assume Record
 		// Attributes can be empty
 		noAttributes = false
 	default:
@@ -71,7 +71,7 @@ func (schema JsonSchema) verifyEntityType(path Path, value JsonEntityType, looku
 
 	for _, value := range value.MemberOfTypes {
 		if _, found := etypes[value]; !found {
-			return fmt.Errorf("%s: memberOf property non-existant: %s: %w", path.String(), value, ErrInvalidSchema)
+			return fmt.Errorf("%s: memberOf property non-existent: %s: %w", path.String(), value, ErrInvalidSchema)
 		}
 	}
 
@@ -295,7 +295,7 @@ func processCommonDefs(ekey string, namespace string, common JsonCommonTypes) (c
 		return defs, nil
 	}
 
-	// TODO - unclear from specification if there may be dependancies
+	// TODO - unclear from specification if there may be dependencies
 	// within a type.
 	for key, entry := range common {
 		shape, err := processEntityShape(ekey, namespace, entry, defs)

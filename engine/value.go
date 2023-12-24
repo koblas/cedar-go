@@ -149,7 +149,7 @@ func (v1 IntValue) AsJson() any {
 	return v1
 }
 
-// Integer Comparision
+// Integer Comparison
 
 func (v1 IntValue) OpLss(input NamedType) (BoolValue, error) {
 	v2, ok := input.(IntValue)

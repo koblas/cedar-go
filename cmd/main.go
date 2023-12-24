@@ -17,7 +17,7 @@ func main() {
 	policyFile := flag.String("policies", "", "file for policy data")
 	entityFile := flag.String("entities", "", "file for entities data")
 	// contextFile := flag.String("context", "", "file for context data")
-	schemaFile := flag.String("schema", "", "file for schema defintion")
+	schemaFile := flag.String("schema", "", "file for schema definition")
 	principalStr := flag.String("principal", "", "principal entity e.g. User::\"alice\"")
 	actionStr := flag.String("action", "", "action entity e.g. Action::\"view\"")
 	resourceStr := flag.String("resource", "", "resource entity e.g. Photo::\"VacationPhoto94.jpg\"")
