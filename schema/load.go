@@ -351,7 +351,7 @@ func processSchema(input *JsonSchema) (*Schema, error) {
 //
 //
 
-func LoadSchema(reader io.Reader) (*Schema, error) {
+func NewFromJson(reader io.Reader) (*Schema, error) {
 	data, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, err

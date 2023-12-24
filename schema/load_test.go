@@ -45,7 +45,7 @@ func TestBasic(t *testing.T) {
 	}
 	`)
 
-	s, err := schema.LoadSchema(reader)
+	s, err := schema.NewFromJson(reader)
 
 	assert.NoError(t, err)
 	assert.EqualValues(t, len(s.EntityTypes), 1)
@@ -88,7 +88,7 @@ func TestBasicError(t *testing.T) {
 	}
 	`)
 
-	_, err := schema.LoadSchema(reader)
+	_, err := schema.NewFromJson(reader)
 
 	assert.Error(t, err)
 }

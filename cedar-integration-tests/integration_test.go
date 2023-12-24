@@ -129,7 +129,7 @@ func runTests(t *testing.T, dir string) {
 			policy, err := parser.ParseRules(string(policyData))
 			require.NoError(t, err, "failed to parse policies")
 
-			schema, err := schema.LoadSchema(bytes.NewReader(schemaData))
+			schema, err := schema.NewFromJson(bytes.NewReader(schemaData))
 			require.NoError(t, err, "failed to parse schema")
 
 			store, err := schema.NormalizeEntites(entities)

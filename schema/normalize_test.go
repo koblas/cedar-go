@@ -109,7 +109,7 @@ func TestNormalizerBase(t *testing.T) {
 	} }
 	`
 
-	sch, err := schema.LoadSchema(strings.NewReader(schemaData))
+	sch, err := schema.NewFromJson(strings.NewReader(schemaData))
 	require.NoError(t, err)
 
 	entites := schema.JsonEntities{}
