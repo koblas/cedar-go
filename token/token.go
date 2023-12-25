@@ -3,7 +3,6 @@ package token
 import (
 	"strconv"
 	"unicode"
-	"unicode/utf8"
 )
 
 type Token int
@@ -169,31 +168,6 @@ func (tok Token) String() string {
 	return "token(" + strconv.Itoa(int(tok)) + ")"
 }
 
-// const (
-// 	LowestPrec  = 0 // non-operators
-// 	UnaryPrec   = 6
-// 	HighestPrec = 7
-// )
-
-// Precedence returns the operator precedence of the binary
-// operator op. If op is not a binary operator, the result
-// is LowestPrecedence.
-// func (op Token) Precedence() int {
-// 	switch op {
-// 	case LOR:
-// 		return 1
-// 	case LAND:
-// 		return 2
-// 	case EQL, NEQ, LSS, LEQ, GTR, GEQ:
-// 		return 3
-// 	case ADD, SUB:
-// 		return 4
-// 	case MUL, QUO, REM:
-// 		return 5
-// 	}
-// 	return LowestPrec
-// }
-
 var keywords map[string]Token
 
 func init() {
@@ -226,12 +200,6 @@ func (tok Token) IsOperator() bool {
 // IsKeyword returns true for tokens corresponding to keywords;
 // it returns false otherwise.
 func (tok Token) IsKeyword() bool { return keyword_beg < tok && tok < keyword_end }
-
-// IsExported reports whether name starts with an upper-case letter.
-func IsExported(name string) bool {
-	ch, _ := utf8.DecodeRuneInString(name)
-	return unicode.IsUpper(ch)
-}
 
 // IsKeyword reports whether name is a Go keyword, such as "func" or "return".
 func IsKeyword(name string) bool {

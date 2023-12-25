@@ -4,7 +4,11 @@
 
 package token
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
 
 func TestIsIdentifier(t *testing.T) {
 	tests := []struct {
@@ -25,9 +29,26 @@ func TestIsIdentifier(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			if got := IsIdentifier(test.in); got != test.want {
-				t.Fatalf("IsIdentifier(%q) = %t, want %v", test.in, got, test.want)
-			}
+			got := IsIdentifier(test.in)
+			require.EqualValues(t, test.want, got)
 		})
 	}
+}
+
+func TestIsLiteral(t *testing.T) {
+	require.True(t, INT.IsLiteral())
+	require.False(t, MUL.IsLiteral())
+	require.False(t, TRUE.IsLiteral())
+}
+
+func TestIsOperator(t *testing.T) {
+	require.False(t, INT.IsOperator())
+	require.True(t, MUL.IsOperator())
+	require.False(t, TRUE.IsOperator())
+}
+
+func TestIsKeyword(t *testing.T) {
+	require.False(t, INT.IsKeyword())
+	require.False(t, MUL.IsKeyword())
+	require.True(t, TRUE.IsKeyword())
 }

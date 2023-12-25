@@ -399,12 +399,6 @@ func (n *MemberExpr) ToAst(file *token.File) (engine.EvalNode, error) {
 	}
 
 	return left, nil
-
-	// return &engine.Reference{
-	// 	StartPos: file.Position(n.Pos()),
-	// 	Source:   source,
-	// }, nil
-
 }
 
 func (n *FunctionCall) ToAst(file *token.File) (engine.EvalNode, error) {
