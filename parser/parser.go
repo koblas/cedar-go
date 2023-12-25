@@ -250,7 +250,7 @@ func (p *parser) parseReceiverInits() []cst.ReceiverInit {
 		expr := p.parseExpr()
 
 		node := cst.ReceiverInit{
-			Literal: lit,
+			Literal: &lit,
 			Expr:    expr,
 		}
 

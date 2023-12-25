@@ -6,8 +6,6 @@ import (
 	"strings"
 
 	"github.com/koblas/cedar-go"
-	"github.com/koblas/cedar-go/engine"
-	"github.com/koblas/cedar-go/parser"
 )
 
 const ENTITIES = `
@@ -40,7 +38,7 @@ const POLICIES = `
 `
 
 func main() {
-	policies, err := parser.ParseRules(POLICIES)
+	policies, err := cedar.ParsePolicies(POLICIES)
 	if err != nil {
 		panic(fmt.Errorf("unable to parse policies: %w", err))
 	}
@@ -51,9 +49,9 @@ func main() {
 	}
 
 	req := cedar.Request{
-		Principal: engine.NewEntityValue("User", "alice"),
-		Action:    engine.NewEntityValue("Action", "view"),
-		Resource:  engine.NewEntityValue("Photo", "vacation.jpg"),
+		Principal: cedar.NewEntity("User", "alice"),
+		Action:    cedar.NewEntity("Action", "view"),
+		Resource:  cedar.NewEntity("Photo", "vacation.jpg"),
 	}
 
 	auth := cedar.NewAuthorizer(policies, cedar.WithStore(store))

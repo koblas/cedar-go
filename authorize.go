@@ -7,6 +7,7 @@ import (
 	"io"
 
 	"github.com/koblas/cedar-go/engine"
+	"github.com/koblas/cedar-go/parser"
 	"github.com/koblas/cedar-go/schema"
 )
 
@@ -117,4 +118,16 @@ func (auth *SchemaAuthorizer) IsAuthorized(ctx context.Context, request *Request
 	}
 
 	return detail.IsAllowed, nil
+}
+
+// NewEntity constructs an engine.EntityValue object based on the kind (e.g. User or Action)
+// and the id (e.g. "alice" or "view")
+func NewEntity(kind, id string) engine.EntityValue {
+	return engine.NewEntityValue(kind, id)
+}
+
+// ParsePolicies will parse the policy definition and return a runtime
+// evaluation engine for the data
+func ParsePolicies(policies string) (engine.PolicyList, error) {
+	return parser.ParseRules(policies)
 }
