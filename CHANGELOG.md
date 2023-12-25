@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.3](https://github.com/koblas/cedar-go/compare/v0.0.2...v0.0.3) (2023-12-25)
+
+
+### Bug Fixes
+
+* cleanup types for lookups ([#9](https://github.com/koblas/cedar-go/issues/9)) ([b4af95c](https://github.com/koblas/cedar-go/commit/b4af95cc8251fab62a74f1b999dd2ffb11d37368))
+
 ## [0.0.2](https://github.com/koblas/cedar-go/compare/v0.0.1...v0.0.2) (2023-12-24)
 
 
