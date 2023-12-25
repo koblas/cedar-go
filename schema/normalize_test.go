@@ -123,7 +123,7 @@ func TestNormalizerBase(t *testing.T) {
 	require.NoError(t, err)
 
 	vval := value.(*engine.VarValue)
-	eval, err := vval.OpLookup(engine.IdentifierValue("account"))
+	eval, err := vval.OpLookup(engine.IdentifierValue("account"), nil)
 	require.NoError(t, err)
 
 	require.EqualValues(t, "entity", eval.TypeName())

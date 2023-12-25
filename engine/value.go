@@ -60,9 +60,9 @@ type CallableType interface {
 
 type VariableType interface {
 	// Call function
-	OpLookup(input NamedType) (EvalValue, error)
+	OpLookup(input NamedType, store Store) (EvalValue, error)
 	// Check for property
-	OpHas(input NamedType) (BoolValue, error)
+	OpHas(input NamedType, store Store) (BoolValue, error)
 }
 
 var ErrTypeMismatch = errors.New("type mismatch")
@@ -265,6 +265,7 @@ const ENTITY_PATH_SEP = "::"
 var _ NamedType = (*EntityValue)(nil)
 var _ InType = (*EntityValue)(nil)
 var _ IsType = (*EntityValue)(nil)
+var _ VariableType = (*EntityValue)(nil)
 
 func NewEntityValue(kind string, id string) EntityValue {
 	parts := strings.Split(kind, ENTITY_PATH_SEP)
@@ -426,6 +427,32 @@ func (v1 EntityValue) OpIs(input NamedType) (BoolValue, error) {
 	return true, nil
 }
 
+func (v1 EntityValue) OpHas(input NamedType, store Store) (BoolValue, error) {
+	val, err := store.Get(v1)
+	if errors.Is(err, ErrValueNotFound) {
+		val = &VarValue{}
+	}
+	vtype, ok := val.(VariableType)
+	if !ok {
+		return false, fmt.Errorf("expected variable type got %s: %w", val.TypeName(), ErrTypeMismatch)
+	}
+
+	return vtype.OpHas(input, store)
+}
+
+func (v1 EntityValue) OpLookup(input NamedType, store Store) (EvalValue, error) {
+	val, err := store.Get(v1)
+	if errors.Is(err, ErrValueNotFound) {
+		val = &VarValue{}
+	}
+	vtype, ok := val.(VariableType)
+	if !ok {
+		return nil, fmt.Errorf("expected variable type got %s: %w", val.TypeName(), ErrTypeMismatch)
+	}
+
+	return vtype.OpLookup(input, store)
+}
+
 // ---------
 
 type SetValue []NamedType
@@ -574,7 +601,7 @@ func (v1 *VarValue) OpEqual(input NamedType) (BoolValue, error) {
 	return false, nil
 }
 
-func (v1 *VarValue) OpLookup(input NamedType) (EvalValue, error) {
+func (v1 *VarValue) OpLookup(input NamedType, store Store) (EvalValue, error) {
 	if val, ok := input.(StrValue); ok {
 		child, found := v1.children[string(val)]
 		if !found {
@@ -593,7 +620,7 @@ func (v1 *VarValue) OpLookup(input NamedType) (EvalValue, error) {
 	return nil, fmt.Errorf("invalid type: %s: %w", input.TypeName(), ErrUnsupportedType)
 }
 
-func (v1 *VarValue) OpHas(input NamedType) (BoolValue, error) {
+func (v1 *VarValue) OpHas(input NamedType, store Store) (BoolValue, error) {
 	if val, ok := input.(StrValue); ok {
 		_, found := v1.children[string(val)]
 		return BoolValue(found), nil

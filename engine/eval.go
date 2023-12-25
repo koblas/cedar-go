@@ -91,25 +91,6 @@ func (n *UnaryExpr) evalNode(request *RuntimeRequest) (EvalValue, error) {
 	return nil, fmt.Errorf("unknown unary op: %s", n.StartPos)
 }
 
-func (n *BinaryExpr) evalEntityOrStore(left NamedType, right NamedType, request *RuntimeRequest) (NamedType, error) {
-	ltype, ok := left.(*VarValue)
-	if ok {
-		return ltype, nil
-	}
-	etype, ok := left.(EntityValue)
-	if !ok {
-		msg := fmt.Sprintf("type error: not supported %s %s %s",
-			left.TypeName(), n.Op.String(), right.TypeName())
-		return nil, evalError(n, msg)
-	}
-
-	val, err := request.Store.Get(etype)
-	if errors.Is(err, ErrValueNotFound) {
-		val = &VarValue{}
-	}
-	return val, nil
-}
-
 func (n *BinaryExpr) evalNode(request *RuntimeRequest) (EvalValue, error) {
 	if request.Trace {
 		fmt.Printf("BinaryExpr(%s)\n", n.Op.String())
@@ -254,31 +235,22 @@ func (n *BinaryExpr) evalNode(request *RuntimeRequest) (EvalValue, error) {
 		return ltype.OpLike(right)
 
 	case OpHas:
-		ltype, err := n.evalEntityOrStore(left, right, request)
-		if err != nil {
-			return nil, err
-		}
-		vtype, ok := ltype.(VariableType)
+		ltype, ok := left.(VariableType)
 		if !ok {
-			msg := fmt.Sprintf("type error: not supported %s %s %s",
-				left.TypeName(), n.Op.String(), right.TypeName())
+			msg := fmt.Sprintf("type error: lookup not supported %s", left.TypeName())
 			return nil, evalError(n, msg)
 		}
 
-		return vtype.OpHas(right)
+		return ltype.OpHas(right, request.Store)
 
 	case OpLookup:
-		ltype, err := n.evalEntityOrStore(left, right, request)
-		if err != nil {
-			return nil, err
-		}
-		vtype, ok := ltype.(VariableType)
+		ltype, ok := left.(VariableType)
 		if !ok {
-			msg := fmt.Sprintf("type error: not supported %s %s %s",
-				left.TypeName(), n.Op.String(), right.TypeName())
+			msg := fmt.Sprintf("type error: lookup not supported %s", left.TypeName())
 			return nil, evalError(n, msg)
 		}
-		return vtype.OpLookup(right)
+
+		return ltype.OpLookup(right, request.Store)
 	}
 
 	return nil, evalError(n, fmt.Sprintf("Unexpected binary op %s", n.Op.String()))
