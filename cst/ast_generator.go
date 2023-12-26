@@ -160,22 +160,22 @@ func (n *BasicLit) ToAst(file *token.File) (engine.EvalNode, error) {
 	case token.PRINCIPAL:
 		return &engine.Reference{
 			StartPos: file.Position(n.Pos()),
-			Source:   engine.PrincipalPrincipal,
+			Source:   engine.RunVarPrincipal,
 		}, nil
 	case token.ACTION:
 		return &engine.Reference{
 			StartPos: file.Position(n.Pos()),
-			Source:   engine.PrincipalAction,
+			Source:   engine.RunVarAction,
 		}, nil
 	case token.RESOURCE:
 		return &engine.Reference{
 			StartPos: file.Position(n.Pos()),
-			Source:   engine.PrincipalResource,
+			Source:   engine.RunVarResource,
 		}, nil
 	case token.CONTEXT:
 		return &engine.Reference{
 			StartPos: file.Position(n.Pos()),
-			Source:   engine.PrincipalContext,
+			Source:   engine.RunVarContext,
 		}, nil
 
 	case token.IDENTIFER:

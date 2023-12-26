@@ -11,9 +11,10 @@ var ErrStoreNotFound = errors.New("store not found")
 // phase.
 type Store interface {
 	// Get is used in the context of `principal.active` where
-	// we are given the entity (e.g. `User:"alice"`) and should
-	// return appropriate attributes for that entity. This should be
-	// a VarValue object as the current time
+	// we are given the entity (e.g. `User:"alice"`) and the
+	// key to lookup. This should return `ErrValueNotFound` in
+	// the event the key is not found in the store (this is to
+	// support `has` operations).
 	Get(EntityValue, string) (EvalValue, error)
 	// GetParents does a transitive lookup for a given entity as
 	// a child of some other entity. i.e. `principal in Group::"admin"`

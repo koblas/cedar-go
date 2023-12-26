@@ -31,10 +31,16 @@ type RuntimeRequest struct {
 	actionValue    EntityValue
 
 	//
+	//
+	principalSlot NamedType
+	resourceSlot  NamedType
+
+	//
 	functionTable map[string]Function
 
 	// Debugging
-	Trace bool
+	Trace  bool
+	indent int
 }
 
 type EvalNode interface {
@@ -57,16 +63,44 @@ func asBool(n ExprNode, v EvalValue) (bool, error) {
 	return bool(value), nil
 }
 
+func printTrace(indent int, format string, args ...any) {
+	const dots = ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . "
+	const n = len(dots)
+	i := 2 * indent
+	for i > n {
+		fmt.Print(dots)
+		i -= n
+	}
+	// i <= n
+	fmt.Print(dots[0:i])
+	fmt.Printf(format, args...)
+	fmt.Print("\n")
+}
+
+func trace(r *RuntimeRequest, format string, args ...any) *RuntimeRequest {
+	printTrace(r.indent, format+"%s", append(args, "(")...)
+	r.indent += 1
+	return r
+}
+
+func un(r *RuntimeRequest) {
+	r.indent -= 1
+	printTrace(r.indent, ")")
+}
+
 //
 //
 
-func (n *ValueNode) evalNode(*RuntimeRequest) (EvalValue, error) {
+func (n *ValueNode) evalNode(request *RuntimeRequest) (EvalValue, error) {
+	if request.Trace {
+		printTrace(request.indent, "%s[%s]", n.Value.TypeName(), n.Value)
+	}
 	return n.Value, nil
 }
 
 func (n *UnaryExpr) evalNode(request *RuntimeRequest) (EvalValue, error) {
 	if request.Trace {
-		fmt.Printf("UnaryExpr(%s)\n", n.Op.String())
+		defer un(trace(request, "UnaryExpr[%s]", n.Op.String()))
 	}
 	result, err := n.Left.evalNode(request)
 	if err != nil {
@@ -93,7 +127,7 @@ func (n *UnaryExpr) evalNode(request *RuntimeRequest) (EvalValue, error) {
 
 func (n *BinaryExpr) evalNode(request *RuntimeRequest) (EvalValue, error) {
 	if request.Trace {
-		fmt.Printf("BinaryExpr(%s)\n", n.Op.String())
+		defer un(trace(request, "BinaryExpr[%s]", n.Op.String()))
 	}
 	left, err := n.Left.evalNode(request)
 	if err != nil {
@@ -258,7 +292,7 @@ func (n *BinaryExpr) evalNode(request *RuntimeRequest) (EvalValue, error) {
 
 func (n *IfExpr) evalNode(request *RuntimeRequest) (EvalValue, error) {
 	if request.Trace {
-		fmt.Printf("IfExpr()\n")
+		defer un(trace(request, "IfExpr"))
 	}
 	cond, err := n.If.evalNode(request)
 	if err != nil {
@@ -275,7 +309,7 @@ func (n *IfExpr) evalNode(request *RuntimeRequest) (EvalValue, error) {
 		expr = n.Else
 	}
 	if request.Trace {
-		fmt.Printf("If%s()\n", branch)
+		defer un(trace(request, "If%s", branch))
 	}
 
 	return expr.evalNode(request)
@@ -283,7 +317,7 @@ func (n *IfExpr) evalNode(request *RuntimeRequest) (EvalValue, error) {
 
 func (n *FunctionCall) evalNode(request *RuntimeRequest) (EvalValue, error) {
 	if request.Trace {
-		fmt.Printf("Function(%s[...])\n", n.Name)
+		defer un(trace(request, "Function[%s]", n.Name))
 	}
 
 	var left EvalValue
@@ -318,7 +352,7 @@ func (n *FunctionCall) evalNode(request *RuntimeRequest) (EvalValue, error) {
 
 func (n *ListExpr) evalNode(request *RuntimeRequest) (EvalValue, error) {
 	if request.Trace {
-		fmt.Printf("ListExpr(__)\n")
+		defer un(trace(request, "ListExpr"))
 	}
 	values := []NamedType{}
 	for _, item := range n.Exprs {
@@ -334,20 +368,24 @@ func (n *ListExpr) evalNode(request *RuntimeRequest) (EvalValue, error) {
 
 func (n *Reference) evalNode(request *RuntimeRequest) (EvalValue, error) {
 	if request.Trace {
-		fmt.Printf("ReferenceExpr(%s)\n", n.Source.String())
+		printTrace(request.indent, "ReferenceExpr[%s]", n.Source.String())
 	}
-	if n.Source == PrincipalContext {
+	if n.Source == RunVarContext {
 		// TODO - shouldn't happen
 		return request.Context, nil
 	}
 
 	switch n.Source {
-	case PrincipalPrincipal:
+	case RunVarPrincipal:
 		return request.principalValue, nil
-	case PrincipalAction:
+	case RunVarAction:
 		return request.actionValue, nil
-	case PrincipalResource:
+	case RunVarResource:
 		return request.resourceValue, nil
+	case RunVarSlotPrincipal:
+		return request.principalSlot, nil
+	case RunVarSlotResource:
+		return request.resourceSlot, nil
 	}
 
 	return nil, fmt.Errorf("not implemented")
@@ -370,7 +408,7 @@ func (n *VariableDef) evalNode(request *RuntimeRequest) (EvalValue, error) {
 
 func (n *Identifier) evalNode(request *RuntimeRequest) (EvalValue, error) {
 	if request.Trace {
-		fmt.Printf("Identifier(%s)\n", n.Value)
+		printTrace(request.indent, "Identifier[%s]", n.Value)
 	}
 	// This feels like a hack
 	return IdentifierValue(n.Value), nil
@@ -378,7 +416,7 @@ func (n *Identifier) evalNode(request *RuntimeRequest) (EvalValue, error) {
 
 func (n *PolicyCondition) evalNode(request *RuntimeRequest) (EvalValue, error) {
 	if request.Trace {
-		fmt.Printf("  PolicyCondition(%s)\n", n.Condition.String())
+		defer un(trace(request, "PolicyCondition[%s]", n.Condition.String()))
 	}
 	result, err := n.Expr.evalNode(request)
 	if err != nil {
@@ -398,7 +436,7 @@ func (n *PolicyCondition) evalNode(request *RuntimeRequest) (EvalValue, error) {
 
 func (n *Policy) evalNode(request *RuntimeRequest) (*policyResult, error) {
 	if request.Trace {
-		fmt.Printf("Policy(id=%s, type=%s)\n", n.Id, n.Effect.String())
+		defer un(trace(request, "Policy[id=%s, type=%s]", n.Id, n.Effect.String()))
 	}
 
 	if r, err := n.If.evalNode(request); err != nil {
@@ -420,9 +458,9 @@ func (n *Policy) evalNode(request *RuntimeRequest) (*policyResult, error) {
 			return nil, err
 		}
 		evalResult = evalResult && boolValue
-		if request.Trace {
-			fmt.Printf("  PolicyCondition(%s) = %v\n", item.Condition.String(), boolValue)
-		}
+		// if request.Trace {
+		// 	fmt.Printf("PolicyCondition(%s) = %v", item.Condition.String(), boolValue)
+		// }
 	}
 
 	forbid := false
@@ -444,7 +482,7 @@ func (n *Policy) evalNode(request *RuntimeRequest) (*policyResult, error) {
 
 func (p PolicyList) evalNode(request *RuntimeRequest) (*policyResult, error) {
 	if request.Trace {
-		fmt.Printf("PolicyList()\n")
+		defer un(trace(request, "PolicyList"))
 	}
 	allowed := false
 	forbid := false

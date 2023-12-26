@@ -20,7 +20,12 @@ type Request struct {
 	Principal EntityValue
 	Resource  EntityValue
 	Action    EntityValue
-	Trace     bool // print debugging
+
+	// Slot Variables (e.g. runtime variables)
+	SlotPrincipal NamedType
+	SlotResource  NamedType
+
+	Trace bool // print debugging
 }
 
 type Decision int
@@ -58,6 +63,8 @@ func Eval(ctx context.Context, p PolicyList, request *Request) (*Result, error) 
 		principalValue: request.Principal,
 		resourceValue:  request.Resource,
 		actionValue:    request.Action,
+		principalSlot:  request.SlotPrincipal,
+		resourceSlot:   request.SlotResource,
 		functionTable:  functionTable,
 		Trace:          request.Trace,
 	}
