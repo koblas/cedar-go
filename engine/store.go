@@ -14,7 +14,7 @@ type Store interface {
 	// we are given the entity (e.g. `User:"alice"`) and should
 	// return appropriate attributes for that entity. This should be
 	// a VarValue object as the current time
-	Get(EntityValue) (EvalValue, error)
+	Get(EntityValue, string) (EvalValue, error)
 	// GetParents does a transitive lookup for a given entity as
 	// a child of some other entity. i.e. `principal in Group::"admin"`
 	// This returns a list of all transitive entitys.

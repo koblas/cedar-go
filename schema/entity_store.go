@@ -24,7 +24,7 @@ func NewEmptyStore() *EmptyStore {
 	return &EmptyStore{}
 }
 
-func (store *EmptyStore) Get(key engine.EntityValue) (engine.EvalValue, error) {
+func (store *EmptyStore) Get(key engine.EntityValue, str string) (engine.EvalValue, error) {
 	return nil, nil
 }
 
@@ -34,14 +34,22 @@ func (store *EmptyStore) GetParents(key engine.EntityValue) ([]engine.EntityValu
 
 var _ engine.Store = (EntityStore)(nil)
 
-func (store EntityStore) Get(key engine.EntityValue) (engine.EvalValue, error) {
+func (store EntityStore) Get(key engine.EntityValue, str string) (engine.EvalValue, error) {
 	value, found := store[key.String()]
 
-	if !found {
+	if !found || value.values == nil {
 		return nil, engine.ErrValueNotFound
 	}
 
-	return value.values, nil
+	// In a "database" oritend Store we could just fetch the right
+	// column.  In this case we're re-using the the knowledge that
+	// this is an entity store with VarValue as the map type
+	val, err := value.values.OpLookup(engine.StrValue(str), store)
+	if err != nil {
+		return nil, err
+	}
+
+	return val, nil
 }
 
 func (store EntityStore) GetParents(key engine.EntityValue) ([]engine.EntityValue, error) {
