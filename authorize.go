@@ -11,6 +11,7 @@ import (
 	"github.com/koblas/cedar-go/schema"
 )
 
+// Request is used to setup per-request variables to the authorization engine
 type Request struct {
 	Principal engine.EntityValue
 	Action    engine.EntityValue
@@ -18,7 +19,8 @@ type Request struct {
 	Context   *engine.VarValue
 }
 
-type Detail struct {
+// AuthDetail provides additional information about the authorized evaluation.
+type AuthDetail struct {
 	IsAllowed bool
 	Matches   []string
 }
@@ -34,6 +36,7 @@ type SchemaAuthorizer struct {
 	Policies engine.PolicyList
 	Schema   *schema.Schema
 	Store    engine.Store
+	trace    bool
 }
 
 type EmptyStore struct{}
@@ -54,9 +57,7 @@ func StoreFromJson(reader io.Reader, sdef *schema.Schema) (engine.Store, error) 
 	return sdef.NormalizeEntites(entities)
 }
 
-//
-//
-
+// Option handles conditional options to the auth engine
 type Option func(*SchemaAuthorizer)
 
 // WithSchema add a schema definition to the engine this
@@ -75,6 +76,14 @@ func WithStore(s engine.Store) Option {
 	}
 }
 
+// WithTracing enables basic evaluation tracing, useful for
+// development purposes
+func WithTracing() Option {
+	return func(sa *SchemaAuthorizer) {
+		sa.trace = true
+	}
+}
+
 // NewAuthorizer constructs a authorization engine with pre-parsed
 // rules and options
 func NewAuthorizer(p engine.PolicyList, options ...Option) *SchemaAuthorizer {
@@ -90,14 +99,17 @@ func NewAuthorizer(p engine.PolicyList, options ...Option) *SchemaAuthorizer {
 	return &conf
 }
 
-func (auth *SchemaAuthorizer) IsAuthorizedDetail(ctx context.Context, request *Request) (*Detail, error) {
+// IsAuthorizedDetail provides additional detail from the evaluation engine about why the
+// result was formed. The `IsAuthorized“ is the perfered method that validation engines
+// should use
+func (auth *SchemaAuthorizer) IsAuthorizedDetail(ctx context.Context, request *Request) (*AuthDetail, error) {
 	req := engine.Request{
 		Principal: request.Principal,
 		Action:    request.Action,
 		Resource:  request.Resource,
 		Context:   request.Context,
 		Store:     auth.Store,
-		Trace:     false,
+		Trace:     auth.trace,
 	}
 
 	result, err := engine.Eval(ctx, auth.Policies, &req)
@@ -105,12 +117,14 @@ func (auth *SchemaAuthorizer) IsAuthorizedDetail(ctx context.Context, request *R
 	if err != nil {
 		return nil, err
 	}
-	return &Detail{
+	return &AuthDetail{
 		IsAllowed: result.Decision == engine.Allow,
 		Matches:   result.Reasons,
 	}, nil
 }
 
+// IsAuthorized is the primary entry point that services should use to evaluate based on the
+// pre-loaded rules and store information.
 func (auth *SchemaAuthorizer) IsAuthorized(ctx context.Context, request *Request) (bool, error) {
 	detail, err := auth.IsAuthorizedDetail(ctx, request)
 	if err != nil {
@@ -127,7 +141,7 @@ func NewEntity(kind, id string) engine.EntityValue {
 }
 
 // ParsePolicies will parse the policy definition and return a runtime
-// evaluation engine for the data
+// evaluation engine for the data.
 func ParsePolicies(policies string) (engine.PolicyList, error) {
 	return parser.ParseRules(policies)
 }

@@ -30,18 +30,31 @@ func (v Condition) String() string {
 	return [...]string{"invalid", "when", "unless"}[v]
 }
 
-type Principal int
+// RunVar is an enum for runtime variable sources
+type RunVar int
 
 const (
-	PrincipalInvalid   Principal = iota
-	PrincipalResource  Principal = iota
-	PrincipalAction    Principal = iota
-	PrincipalPrincipal Principal = iota
-	PrincipalContext   Principal = iota
+	RunVarInvalid       RunVar = iota
+	RunVarResource      RunVar = iota
+	RunVarAction        RunVar = iota
+	RunVarPrincipal     RunVar = iota
+	RunVarContext       RunVar = iota
+	RunVarSlotPrincipal RunVar = iota
+	RunVarSlotResource  RunVar = iota
 )
 
-func (v Principal) String() string {
-	return [...]string{"invalid", "resource", "action", "principal", "context"}[v]
+var runVarStrings = [...]string{
+	RunVarInvalid:       "invalid",
+	RunVarResource:      "resource",
+	RunVarAction:        "action",
+	RunVarPrincipal:     "principal",
+	RunVarContext:       "context",
+	RunVarSlotPrincipal: "?principal",
+	RunVarSlotResource:  "?resource",
+}
+
+func (v RunVar) String() string {
+	return runVarStrings[v]
 }
 
 type Operand int
@@ -155,7 +168,7 @@ type (
 
 	Reference struct {
 		StartPos token.Position
-		Source   Principal
+		Source   RunVar
 	}
 
 	// Used in `has` expression

@@ -31,6 +31,11 @@ type RuntimeRequest struct {
 	actionValue    EntityValue
 
 	//
+	//
+	principalSlot NamedType
+	resourceSlot  NamedType
+
+	//
 	functionTable map[string]Function
 
 	// Debugging
@@ -336,18 +341,22 @@ func (n *Reference) evalNode(request *RuntimeRequest) (EvalValue, error) {
 	if request.Trace {
 		fmt.Printf("ReferenceExpr(%s)\n", n.Source.String())
 	}
-	if n.Source == PrincipalContext {
+	if n.Source == RunVarContext {
 		// TODO - shouldn't happen
 		return request.Context, nil
 	}
 
 	switch n.Source {
-	case PrincipalPrincipal:
+	case RunVarPrincipal:
 		return request.principalValue, nil
-	case PrincipalAction:
+	case RunVarAction:
 		return request.actionValue, nil
-	case PrincipalResource:
+	case RunVarResource:
 		return request.resourceValue, nil
+	case RunVarSlotPrincipal:
+		return request.principalSlot, nil
+	case RunVarSlotResource:
+		return request.resourceSlot, nil
 	}
 
 	return nil, fmt.Errorf("not implemented")
