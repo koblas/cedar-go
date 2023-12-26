@@ -135,7 +135,11 @@ func runTests(t *testing.T, dir string) {
 			store, err := schema.NormalizeEntites(entities)
 			require.NoError(t, err, "failed to load store - parse entities")
 
-			auth := cedar.NewAuthorizer(policy, cedar.WithSchema(schema), cedar.WithStore(store))
+			auth := cedar.NewAuthorizer(policy,
+				cedar.WithSchema(schema),
+				cedar.WithStore(store),
+				// cedar.WithTracing(),
+			)
 
 			for _, query := range spec.Queries {
 				t.Run(query.Description, func(t *testing.T) {
@@ -220,13 +224,13 @@ func TestMulti(t *testing.T) {
 
 // ------ pull outs for debugging
 
-func TestExampe4c(t *testing.T) {
-	runTests(t, "tests/example_use_cases_doc/4c.json")
-}
+// func TestExampe4c(t *testing.T) {
+// 	runTests(t, "tests/example_use_cases_doc/4c.json")
+// }
 
-func TestExampe3(t *testing.T) {
-	runTests(t, "tests/multi/3.json")
-}
+// func TestExampe3(t *testing.T) {
+// 	runTests(t, "tests/multi/3.json")
+// }
 
 func TestNullTest(t *testing.T) {
 	runTests(t, "corpus_tests/226abd401950859a4fc3fe5f82182ed5cd403d17.json")
