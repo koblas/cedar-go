@@ -427,30 +427,45 @@ func (v1 EntityValue) OpIs(input NamedType) (BoolValue, error) {
 	return true, nil
 }
 
-func (v1 EntityValue) OpHas(input NamedType, store Store) (BoolValue, error) {
-	val, err := store.Get(v1)
-	if errors.Is(err, ErrValueNotFound) {
-		val = &VarValue{}
+func valueAsString(input NamedType) (string, error) {
+	if val, ok := input.(StrValue); ok {
+		return string(val), nil
 	}
-	vtype, ok := val.(VariableType)
-	if !ok {
-		return false, fmt.Errorf("expected variable type got %s: %w", val.TypeName(), ErrTypeMismatch)
+	if val, ok := input.(IdentifierValue); ok {
+		return string(val), nil
+	}
+	return "", fmt.Errorf("expected identifier or string got %s: %w", input.TypeName(), ErrEvalError)
+}
+
+func (v1 EntityValue) OpHas(input NamedType, store Store) (BoolValue, error) {
+	str, err := valueAsString(input)
+	if err != nil {
+		return false, err
 	}
 
-	return vtype.OpHas(input, store)
+	_, err = store.Get(v1, str)
+	if errors.Is(err, ErrValueNotFound) {
+		return false, nil
+	} else if err != nil {
+		return false, fmt.Errorf("value not found: %w", err)
+	}
+
+	return true, nil
 }
 
 func (v1 EntityValue) OpLookup(input NamedType, store Store) (EvalValue, error) {
-	val, err := store.Get(v1)
-	if errors.Is(err, ErrValueNotFound) {
-		val = &VarValue{}
+	str, err := valueAsString(input)
+	if err != nil {
+		return nil, err
 	}
-	vtype, ok := val.(VariableType)
-	if !ok {
-		return nil, fmt.Errorf("expected variable type got %s: %w", val.TypeName(), ErrTypeMismatch)
+	val, err := store.Get(v1, str)
+	if errors.Is(err, ErrValueNotFound) {
+		return nil, err
+	} else if err != nil {
+		return nil, fmt.Errorf("value not found: %w", err)
 	}
 
-	return vtype.OpLookup(input, store)
+	return val, nil
 }
 
 // ---------
