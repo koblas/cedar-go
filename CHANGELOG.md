@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.0.0](https://github.com/koblas/cedar-go/compare/v0.0.3...v1.0.0) (2023-12-26)
+
+
+### ⚠ BREAKING CHANGES
+
+* change the store Get method
+* Update the store.Get method ([#11](https://github.com/koblas/cedar-go/issues/11))
+
+### Bug Fixes
+
+* change the store Get method ([7cd484f](https://github.com/koblas/cedar-go/commit/7cd484f3ea945a382b91659bddf58734dd9d905b))
+* Update the store.Get method ([#11](https://github.com/koblas/cedar-go/issues/11)) ([7cd484f](https://github.com/koblas/cedar-go/commit/7cd484f3ea945a382b91659bddf58734dd9d905b))
+
 ## [0.0.3](https://github.com/koblas/cedar-go/compare/v0.0.2...v0.0.3) (2023-12-25)
 
 
